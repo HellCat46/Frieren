@@ -1,9 +1,15 @@
 import {
+  ChatInputCommandInteraction,
   SlashCommandBuilder,
   CommandInteraction,
   EmbedBuilder,
   SlashCommandStringOption,
   SlashCommandAttachmentOption,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  TextInputBuilder,
+  ModalBuilder,
 } from "discord.js";
 
 module.exports = {
@@ -20,16 +26,66 @@ module.exports = {
                                 .setDescription("First Page of Notes")
                                 .setRequired(false)
     ),
-  async execute(interaction: CommandInteraction) {
-    console.log(interaction.options.get("notes"));
+  async execute(interaction: ChatInputCommandInteraction ) {
+    await interaction.deferReply();
 
-    
-    let embed = new EmbedBuilder()
-      .setTitle(`Notes Topic: ${interaction.options.get("name")?.value}`)
-      .setImage(`${interaction.options.get("notes")?.attachment?.url}`);
+    let topicName = interaction.options.getString("name", true)
+    //console.log(interaction.options.getAttachment("notes"))
 
-    
-    await interaction.reply({ content: "", embeds: [embed] });
+    if(topicName.includes("->")){
+      await interaction.editReply("Not allowed. Use =>");
+      return;
+    }
+
+    let page = interaction.options.getAttachment("notes");
+
+    interaction.options.client.Topics.push(topicName);
+    let embed;
+    if(page){
+      embed = new EmbedBuilder()
+      .setTitle(`Notes Topic: ${topicName}`)
+      .setImage(`${page.url}`);
+    }else {
+      embed = new EmbedBuilder()
+      .setTitle(`Notes Topic : ${topicName}`)
+    }
+
+    const move = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->back`)
+        .setLabel("Back")
+        .setStyle(ButtonStyle.Primary),
+
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->select`)
+        .setLabel("Enter Page No.")
+        .setStyle(ButtonStyle.Secondary),
+  
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->forward`)
+        .setLabel("Forward")
+        .setStyle(ButtonStyle.Primary),
+    );
+
+    const manage = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->add`)
+        .setLabel("Add Page")
+        .setStyle(ButtonStyle.Success),
+
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->remove`)
+        .setLabel("Remove Page")
+        .setStyle(ButtonStyle.Danger),
+
+      new ButtonBuilder()
+        .setCustomId(`${topicName}->advance`)
+        .setLabel("Advance Options")
+        .setStyle(ButtonStyle.Primary),
+    );
+
+
+    await interaction.editReply({ content: "", embeds: [embed], components : [move, manage]});
   },
 };
 

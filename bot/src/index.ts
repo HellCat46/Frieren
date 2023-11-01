@@ -14,6 +14,7 @@ dotenv.config();
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds] });
 
 client.commands = new Collection();
+client.Topics = new Array();
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
