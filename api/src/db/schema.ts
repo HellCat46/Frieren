@@ -16,8 +16,3 @@ export const notes = pgTable("notes", {
         idx : uniqueIndex("name_idx").on(notes.name)
     }
 })
-// export const notesRelation = relations(notes, ({one}) => ({
-//     name : one(notes, {
-
-//     })
-// }))

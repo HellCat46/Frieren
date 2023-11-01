@@ -3,7 +3,8 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun --watch src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "start" : "bun src/index.ts",
     "dbpush" : "drizzle-kit push:pg",
     "dbpull" : "drizzle-kit pull:pg",
     "dbgenerate": "drizzle-kit generate:pg"
