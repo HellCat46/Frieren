@@ -1,0 +1,80 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "id": "5c83d60f-1ddc-4920-b4e4-0532a80ad3c1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "notes": {
+      "name": "notes",
+      "schema": "",
+      "columns": {
+        "_id": {
+          "name": "_id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "_name": {
+          "name": "_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_status": {
+          "name": "_status",
+          "type": "_status",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_notesPath": {
+          "name": "_notesPath",
+          "type": "varchar(50)[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "_archivePath": {
+          "name": "_archivePath",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "name_idx": {
+          "name": "name_idx",
+          "columns": [
+            "_name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "notes__name_unique": {
+          "name": "notes__name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "_name"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {
+    "_status": {
+      "name": "_status",
+      "values": {
+        "Open": "Open",
+        "Closed": "Closed",
+        "Archived": "Archived"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
