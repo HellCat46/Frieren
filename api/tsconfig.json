@@ -1,12 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es2016",       
-    "rootDir": "src",
-    "outDir": "dist",
-    "module": "commonjs",    
-    "esModuleInterop": true,                             
-    "forceConsistentCasingInFileNames": true,   
-    "strict": true,                        
-    "skipLibCheck": true 
+    "lib": ["ESNext"],
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "composite": true,
+    "strict": true,
+    "downlevelIteration": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "types": [
+      "bun-types" // add Bun global
+    ]
   }
 }

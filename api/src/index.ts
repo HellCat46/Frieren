@@ -1,11 +1,18 @@
-import express from "express";
+const server = Bun.serve({
+  port: 3000,
+  fetch(req) {
+    const path = new URL(req.url).pathname;
+    let res;    
+    if(req.method == "GET" && path == "/") res = Root()
+    else res = new Response("Not Found", {status: 404});
+    
+    return res;
+  },
+});
 
-const app = express();
+function Root() {
+  return new Response("Hello");
+}
 
-app.get("/", (req , res) => {
-    res.send("Heyo");
-})
 
-app.listen(3000, ()=> {
-    console.log("Brrrrr");
-})
+console.log(`Listening on http://localhost:${server.port} ...`);
