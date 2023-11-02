@@ -1,11 +1,11 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "5c83d60f-1ddc-4920-b4e4-0532a80ad3c1",
+  "id": "082b408b-a35f-4dcc-8e8a-4b4b03dd5e24",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "notes": {
-      "name": "notes",
+    "topic": {
+      "name": "topic",
       "schema": "",
       "columns": {
         "_id": {
@@ -26,8 +26,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "_notesPath": {
-          "name": "_notesPath",
+        "_notePaths": {
+          "name": "_notePaths",
           "type": "varchar(50)[]",
           "primaryKey": false,
           "notNull": false
@@ -51,8 +51,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "notes__name_unique": {
-          "name": "notes__name_unique",
+        "topic__name_unique": {
+          "name": "topic__name_unique",
           "nullsNotDistinct": false,
           "columns": [
             "_name"

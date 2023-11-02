@@ -5,11 +5,11 @@ import { pgTable, pgEnum, serial, varchar, uniqueIndex} from "drizzle-orm/pg-cor
 export const StatusEnum = pgEnum("_status", ["Open", "Closed", "Archived"])
 
 
-export const notes = pgTable("notes", {
+export const topic = pgTable("topic", {
     id: serial("_id").primaryKey(),
     name: varchar("_name", {length : 50}).unique().notNull(),
     status : StatusEnum("_status").notNull(),
-    notesPath : varchar("_notesPath", {length: 50}).array(),
+    notePaths : varchar("_notePaths", {length: 50}).array(),
     archivepath : varchar("_archivePath", {length : 50})
 }, (notes) => {
     return {

@@ -4,13 +4,13 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "notes" (
+CREATE TABLE IF NOT EXISTS "topic" (
 	"_id" serial PRIMARY KEY NOT NULL,
 	"_name" varchar(50) NOT NULL,
 	"_status" "_status" NOT NULL,
-	"_notesPath" varchar(50)[],
+	"_notePaths" varchar(50)[],
 	"_archivePath" varchar(50),
-	CONSTRAINT "notes__name_unique" UNIQUE("_name")
+	CONSTRAINT "topic__name_unique" UNIQUE("_name")
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "notes" ("_name");
+CREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "topic" ("_name");
