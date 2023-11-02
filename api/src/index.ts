@@ -49,7 +49,22 @@ function GetNote(reqmethod: string, url: URL) {
 async function ListTopics(reqmethod: string) {
   if (reqmethod != "GET") return new Response("", { status: 405 });
 
-  return new Response()
+  try {
+    let records = await db
+      .select({ id: topic.id, name: topic.name })
+      .from(topic);
+
+    // Merge all the properties from array of object into one object
+    let listobj = Object.assign(
+      {},
+      ...records.map((item) => ({ [item.id]: item.name }))
+    );
+
+    return new Response(JSON.stringify(listobj), { status: 200 });
+  } catch (err) {
+    console.error(err);
+    return new Response("", { status: 500 });
+  }
 }
 
 // Creates a new topic in database and returns it's id
