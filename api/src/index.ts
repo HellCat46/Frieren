@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { topic } from "./db/schema";
 import { eq, not } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { mkdir, mkdirSync } from "node:fs";
+import { mkdir, mkdirSync, unlink } from "node:fs";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -209,17 +209,45 @@ async function AddPage(reqmethod: string, url: URL) {
 }
 
 // Remove a page from the topic records
-function RemovePage(reqmethod: string, url: URL) {
+async function RemovePage(reqmethod: string, url: URL) {
   if (reqmethod != "DELETE") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");
-  let pageurl = url.searchParams.get("pageurl");
-  if (!name || !pageurl) {
+  let pagepara = url.searchParams.get("pageno");
+  if (!name || !pagepara) 
     return new Response("Missing or empty required query string", {
       status: 400,
     });
+
+  try {
+    let result = await db.select({pagePaths : topic.pagePaths}).from(topic).where(eq(topic.name, name));
+    if (result.length == 0)
+      return new Response("Topic doesn't exist.", {
+        status: 204,
+      });
+    else if (result[0].pagePaths.length == 0)
+      return new Response("Zero pages for the topic", { status: 204 });
+
+
+
+    let page = result[0].pagePaths[parseInt(pagepara)-1];
+    console.log(result[0].pagePaths, `${notesfolder}/${name}/${page}`);
+
+
+    unlink(`${notesfolder}/${name}/${page}`, (err) => {
+      if (err) return new Response(err.message, { status: 500 });
+    });
+    
+    await db
+      .update(topic)
+      .set({ pagePaths: result[0].pagePaths.filter((pname) => pname != page) })
+      .where(eq(topic.name, name));
+    
+    return new Response("", {status : 200});
+  }catch(err){
+    console.error(err);
+    return new Response("", {status : 500});
   }
-  return new Response();
 }
 
 /*
@@ -229,6 +257,13 @@ Archive will create a pdf from all the topic's page and return it
 */
 function ChangeStatus(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response("", { status: 405 });
+
+  let topicName = url.searchParams.get("name");
+  let status = url.searchParams.get("status");
+  if (!topicName || !status)
+    return new Response("Missing or empty required query string", {
+      status: 400,
+    });
 
   return new Response();
 }
