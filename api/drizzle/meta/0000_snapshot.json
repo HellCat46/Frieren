@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "082b408b-a35f-4dcc-8e8a-4b4b03dd5e24",
+  "id": "439c269a-f41f-42d9-ad22-fbd473ce6bd4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "topic": {
@@ -26,11 +26,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "_notePaths": {
-          "name": "_notePaths",
-          "type": "varchar(50)[]",
+        "_pagePaths": {
+          "name": "_pagePaths",
+          "type": "varchar(40)[]",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "_archivePath": {
           "name": "_archivePath",
@@ -39,15 +39,7 @@
           "notNull": false
         }
       },
-      "indexes": {
-        "name_idx": {
-          "name": "name_idx",
-          "columns": [
-            "_name"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {

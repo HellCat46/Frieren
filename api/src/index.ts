@@ -14,8 +14,8 @@ const db = drizzle(pClient, { schema });
 let notesfolder = "files/notes";
 let archivefolder = "files/archive";
 
-mkdirSync("files/notes", { recursive: true });
-mkdirSync("files/archive", { recursive: true });
+mkdirSync(notesfolder, { recursive: true });
+mkdirSync(archivefolder, { recursive: true });
 
 const server = Bun.serve({
   port: 3000,
@@ -29,8 +29,8 @@ const server = Bun.serve({
     else if (path == "/getpage") res = GetPage(req.method, url);
     else if (path == "/listtopic") res = ListTopics(req.method);
     else if (path == "/create") res = CreateTopic(req.method, url);
-    else if (path == "/addnote") res = AddNote(req.method, url);
-    else if (path == "/remove") res = RemoveNote(req.method, url);
+    else if (path == "/addpage") res = AddPage(req.method, url);
+    else if (path == "/removepage") res = RemovePage(req.method, url);
     else if (path == "/chngstatus") res = ChangeStatus(req.method, url);
     else res = new Response("", { status: 404 });
 
@@ -58,7 +58,7 @@ async function GetPage(reqmethod: string, url: URL) {
   try {
     let pageno = parseInt(pagepara);
     let result = await db
-      .select({ name: topic.name, notePaths: topic.notePaths })
+      .select({ name: topic.name, pagePaths: topic.pagePaths })
       .from(topic)
       .where(eq(topic.name, name));
 
@@ -66,12 +66,12 @@ async function GetPage(reqmethod: string, url: URL) {
       return new Response("Topic doesn't exist.", {
         status: 204,
       });
-    else if(result[0].notePaths.length == 0)
+    else if(result[0].pagePaths.length == 0)
       return new Response("Zero pages for the topic", {status : 204});
-    else if(pageno <=0 || result[0].notePaths.length < pageno)
+    else if(pageno <=0 || result[0].pagePaths.length < pageno)
       return new Response("Page doesn't exist", {status : 204});
 
-    return new Response(Bun.file(`${notesfolder}/${result[0].name}/${result[0].notePaths[pageno-1]}`))
+    return new Response(Bun.file(`${notesfolder}/${result[0].name}/${result[0].pagePaths[pageno-1]}`))
   } catch (err) {
     console.error(err);
     return new Response("", {status : 500});
@@ -103,7 +103,7 @@ async function ListTopics(reqmethod: string) {
 }
 
 // Creates a new topic in database and returns it's id
-// Also creates a folder in directory to save Topic's notes
+// Also creates a folder in "files" directory to save Topic's notes
 async function CreateTopic(reqmethod: string, url: URL) {
   if (reqmethod != "POST") return new Response("", { status: 405 }); // Check for proper http method
 
@@ -139,7 +139,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
     // Checks if first page url is provided or not and creat values object accordingly
     let values;
     if (!pageurl)
-      values = { name, status: schema.StatusEnum.enumValues[0], notePaths: [] };
+      values = { name, status: schema.StatusEnum.enumValues[0], pagePaths: [] };
     else {
       let result = await saveFile(name, [], pageurl);
       if (result == null)
@@ -151,7 +151,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
       values = {
         name,
         status: schema.StatusEnum.enumValues[0],
-        notePaths: [result],
+        pagePaths: [result],
       };
     }
     let id = (
@@ -167,7 +167,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
 
 // Adds more pages to already created topic
 // Returns total number of pages for the topic
-async function AddNote(reqmethod: string, url: URL) {
+async function AddPage(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");
@@ -180,7 +180,7 @@ async function AddNote(reqmethod: string, url: URL) {
 
   try {
     let records = await db
-      .select({ notePaths: topic.notePaths })
+      .select({ pagePaths: topic.pagePaths })
       .from(topic)
       .where(eq(topic.name, name));
     if (records.length == 0)
@@ -188,16 +188,16 @@ async function AddNote(reqmethod: string, url: URL) {
         status: 204,
       });
 
-    let result = await saveFile(name, records[0].notePaths, pageurl);
+    let result = await saveFile(name, records[0].pagePaths, pageurl);
     if (result == null)
       return new Response(
         JSON.stringify({ err: "Error while saving the file", status: 500 }),
         { status: 500 }
       );
 
-    let arr = [...records[0].notePaths, result];
+    let arr = [...records[0].pagePaths, result];
 
-    await db.update(topic).set({ notePaths: arr }).where(eq(topic.name, name));
+    await db.update(topic).set({ pagePaths: arr }).where(eq(topic.name, name));
 
     return new Response(
       JSON.stringify({ page_count: arr.length, status: 200 })
@@ -209,7 +209,7 @@ async function AddNote(reqmethod: string, url: URL) {
 }
 
 // Remove a page from the topic records
-function RemoveNote(reqmethod: string, url: URL) {
+function RemovePage(reqmethod: string, url: URL) {
   if (reqmethod != "DELETE") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");

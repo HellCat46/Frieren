@@ -8,9 +8,7 @@ CREATE TABLE IF NOT EXISTS "topic" (
 	"_id" serial PRIMARY KEY NOT NULL,
 	"_name" varchar(50) NOT NULL,
 	"_status" "_status" NOT NULL,
-	"_notePaths" varchar(50)[],
+	"_pagePaths" varchar(40)[] NOT NULL,
 	"_archivePath" varchar(50),
 	CONSTRAINT "topic__name_unique" UNIQUE("_name")
 );
---> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "topic" ("_name");

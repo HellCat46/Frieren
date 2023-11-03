@@ -9,6 +9,6 @@ export const topic = pgTable("topic", {
     id: serial("_id").primaryKey(),
     name: varchar("_name", {length : 50}).unique().notNull(),
     status : StatusEnum("_status").notNull(),
-    notePaths : varchar("_notePaths", {length: 50}).array().notNull(),
+    pagePaths : varchar("_pagePaths", {length: 40}).array().notNull(),
     archivepath : varchar("_archivePath", {length : 50})
 })
