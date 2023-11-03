@@ -111,8 +111,9 @@ async function CreateTopic(reqmethod: string, url: URL) {
 
     // Checks if first page url is provided or not and creat values object accordingly
     let values;
-    if (!noteurl) values = { name, status: schema.StatusEnum.enumValues[0] };
-    else{
+    if (!noteurl)
+      values = { name, status: schema.StatusEnum.enumValues[0], notePaths: [] };
+    else {
       let result = await saveFile(name, 1, noteurl);
       if (result == null)
         return new Response(
@@ -133,7 +134,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
     return new Response(JSON.stringify({ id, status: 200 }));
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({error : err}), { status: 500 });
+    return new Response(JSON.stringify({ error: err }), { status: 500 });
   }
 }
 
@@ -155,32 +156,21 @@ async function AddNote(reqmethod: string, url: URL) {
       .select({ notePaths: topic.notePaths })
       .from(topic)
       .where(eq(topic.name, name));
-    if (records.length == 0) {
+    if (records.length == 0)
       return new Response("Topic doesn't exist.", {
         status: 204,
       });
-    }
 
-    
-    // Checks if topic already have some pages or not
-    let arr: Array<string>;
-    if (records[0].notePaths){
-      let result = await saveFile(name, records[0].notePaths.length, noteurl);
-      if (result == null) return new Response(JSON.stringify({err: "Error while saving the file", status : 500}), {status : 500})
+      
+    let result = await saveFile(name, records[0].notePaths.length + 1, noteurl);
+    if (result == null)
+      return new Response(
+        JSON.stringify({ err: "Error while saving the file", status: 500 }),
+        { status: 500 }
+      );
 
-      arr = [
-        ...records[0].notePaths, result
-      ];
-    }
-    else {
-      let result = await saveFile(name, 1, noteurl);
-      if (result == null)
-        return new Response(
-          JSON.stringify({ err: "Error while saving the file", status: 500 }),
-          { status: 500 }
-        );
-      arr = [result];
-    }
+    let arr = [...records[0].notePaths, result];
+
 
     await db.update(topic).set({ notePaths: arr }).where(eq(topic.name, name));
 
@@ -218,17 +208,17 @@ function ChangeStatus(reqmethod: string, url: URL) {
   return new Response();
 }
 
-async function saveFile(name: string, count : number, downurl: string) {
+async function saveFile(name: string, count: number, downurl: string) {
   try {
     const res = await fetch(downurl);
     const contenttype = res.headers.get("content-type");
 
     if (!contenttype) return null;
     if (!contenttype.startsWith("image")) return null;
-  
+
     await Bun.write(`${notesfolder}/${name}/${count}.png`, await res.blob());
-    return "OK";
-  }catch(err){
+    return `${notesfolder}/${name}/${count}.png`;
+  } catch (err) {
     console.error(err);
     return null;
   }
