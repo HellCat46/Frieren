@@ -48,6 +48,9 @@ function Root(reqmethod: string) {
 function GetNote(reqmethod: string, url: URL) {
   if (reqmethod != "GET") return new Response("", { status: 405 });
 
+  let name = url.searchParams.get("name");
+  let pageno = url.searchParams.get("pageno");
+
   return new Response();
 }
 
@@ -86,7 +89,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
       status: 400,
     });
 
-  let noteurl = url.searchParams.get("noteurl");
+  let pageurl = url.searchParams.get("pageurl");
   try {
     if (
       (
@@ -111,10 +114,10 @@ async function CreateTopic(reqmethod: string, url: URL) {
 
     // Checks if first page url is provided or not and creat values object accordingly
     let values;
-    if (!noteurl)
+    if (!pageurl)
       values = { name, status: schema.StatusEnum.enumValues[0], notePaths: [] };
     else {
-      let result = await saveFile(name, [], noteurl);
+      let result = await saveFile(name, [], pageurl);
       if (result == null)
         return new Response(
           JSON.stringify({ err: "Error while saving the file", status: 500 }),
@@ -144,8 +147,8 @@ async function AddNote(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");
-  let noteurl = url.searchParams.get("noteurl");
-  if (!name || !noteurl) {
+  let pageurl = url.searchParams.get("pageurl");
+  if (!name || !pageurl) {
     return new Response("Missing or empty required query string", {
       status: 400,
     });
@@ -161,7 +164,7 @@ async function AddNote(reqmethod: string, url: URL) {
         status: 204,
       });
 
-    let result = await saveFile(name, records[0].notePaths, noteurl);
+    let result = await saveFile(name, records[0].notePaths, pageurl);
     if (result == null)
       return new Response(
         JSON.stringify({ err: "Error while saving the file", status: 500 }),
@@ -186,8 +189,8 @@ function RemoveNote(reqmethod: string, url: URL) {
   if (reqmethod != "DELETE") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");
-  let noteurl = url.searchParams.get("noteurl");
-  if (!name || !noteurl) {
+  let pageurl = url.searchParams.get("pageurl");
+  if (!name || !pageurl) {
     return new Response("Missing or empty required query string", {
       status: 400,
     });
