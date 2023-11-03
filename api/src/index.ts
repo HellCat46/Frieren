@@ -1,15 +1,21 @@
-import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./db/schema";
 import postgres from "postgres";
-import dotenv from "dotenv";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { topic } from "./db/schema";
-import { eq, not, sql } from "drizzle-orm";
-import { randomInt, randomUUID } from "crypto";
-import { PgSchema } from "drizzle-orm/pg-core";
+import { eq, not } from "drizzle-orm";
+import { randomInt } from "crypto";
+import { mkdir, mkdirSync } from "node:fs";
+import dotenv from "dotenv";
 dotenv.config();
 
 const pClient = postgres(process.env.CONSTR!, { max: 100 });
 const db = drizzle(pClient, { schema });
+
+let notesfolder = "files/notes";
+let archivefolder = "files/archive";
+
+mkdirSync("files/notes", { recursive: true });
+mkdirSync("files/archive", { recursive: true });
 
 const server = Bun.serve({
   port: 3000,
@@ -50,9 +56,11 @@ async function ListTopics(reqmethod: string) {
   if (reqmethod != "GET") return new Response("", { status: 405 });
 
   try {
+    // Gets all the topics except archived ones
     let records = await db
       .select({ id: topic.id, name: topic.name })
-      .from(topic);
+      .from(topic)
+      .where(not(eq(topic.status, schema.StatusEnum.enumValues[2])));
 
     // Merge all the properties from array of object into one object
     let listobj = Object.assign(
@@ -72,7 +80,7 @@ async function ListTopics(reqmethod: string) {
 async function CreateTopic(reqmethod: string, url: URL) {
   if (reqmethod != "POST") return new Response("", { status: 405 }); // Check for proper http method
 
-  let name = url.searchParams.get("name"); 
+  let name = url.searchParams.get("name");
   if (!name)
     return new Response("Missing or empty required query string", {
       status: 400,
@@ -93,15 +101,31 @@ async function CreateTopic(reqmethod: string, url: URL) {
       });
     }
 
+    mkdir(`${notesfolder}/${name}`, (err) => {
+      if (err)
+        return new Response(
+          JSON.stringify({ status: 500, error: err.message }),
+          { status: 500 }
+        );
+    });
+
     // Checks if first page url is provided or not and creat values object accordingly
     let values;
     if (!noteurl) values = { name, status: schema.StatusEnum.enumValues[0] };
-    else values = {
+    else{
+      let result = await saveFile(name, 1, noteurl);
+      if (result == null)
+        return new Response(
+          JSON.stringify({ err: "Error while saving the file", status: 500 }),
+          { status: 500 }
+        );
+
+      values = {
         name,
         status: schema.StatusEnum.enumValues[0],
-        notePaths: [saveFile(name, noteurl)],
+        notePaths: [result],
       };
-
+    }
     let id = (
       await db.insert(topic).values(values).returning({ id: topic.id })
     )[0].id;
@@ -109,13 +133,12 @@ async function CreateTopic(reqmethod: string, url: URL) {
     return new Response(JSON.stringify({ id, status: 200 }));
   } catch (err) {
     console.error(err);
-    return new Response("", { status: 500 });
+    return new Response(JSON.stringify({error : err}), { status: 500 });
   }
 }
 
-
-// Adds more pages to already created topic 
-// Returns total number of pages for the topic 
+// Adds more pages to already created topic
+// Returns total number of pages for the topic
 async function AddNote(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response("", { status: 405 });
 
@@ -138,14 +161,28 @@ async function AddNote(reqmethod: string, url: URL) {
       });
     }
 
-    // Checks if topic already have some pages or not 
+    
+    // Checks if topic already have some pages or not
     let arr: Array<string>;
-    if (records[0].notePaths)
-      arr = [...records[0].notePaths, saveFile(name, noteurl)];
-    else arr = [saveFile(name, noteurl)];
+    if (records[0].notePaths){
+      let result = await saveFile(name, records[0].notePaths.length, noteurl);
+      if (result == null) return new Response(JSON.stringify({err: "Error while saving the file", status : 500}), {status : 500})
+
+      arr = [
+        ...records[0].notePaths, result
+      ];
+    }
+    else {
+      let result = await saveFile(name, 1, noteurl);
+      if (result == null)
+        return new Response(
+          JSON.stringify({ err: "Error while saving the file", status: 500 }),
+          { status: 500 }
+        );
+      arr = [result];
+    }
 
     await db.update(topic).set({ notePaths: arr }).where(eq(topic.name, name));
-
 
     return new Response(
       JSON.stringify({ page_count: arr.length, status: 200 })
@@ -170,19 +207,30 @@ function RemoveNote(reqmethod: string, url: URL) {
   return new Response();
 }
 
-// Change status of topic
-// Closed will not allow adding more pages
-// Archive will create a pdf from all the topic's page and return it
+/*
+Change status of topic
+Closed will not allow adding more pages
+Archive will create a pdf from all the topic's page and return it
+*/
 function ChangeStatus(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response("", { status: 405 });
 
   return new Response();
 }
 
-function saveFile(topicName: string, downurl: string) {
-  let filename = randomInt(1111, 99999);
-  let filepath = `notes/${topicName}/${filename}`;
+async function saveFile(name: string, count : number, downurl: string) {
+  try {
+    const res = await fetch(downurl);
+    const contenttype = res.headers.get("content-type");
 
-  return filepath;
+    if (!contenttype) return null;
+    if (!contenttype.startsWith("image")) return null;
+  
+    await Bun.write(`${notesfolder}/${name}/${count}.png`, await res.blob());
+    return "OK";
+  }catch(err){
+    console.error(err);
+    return null;
+  }
 }
 console.log(`Listening on http://localhost:${server.port} ...`);
