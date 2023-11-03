@@ -3,7 +3,7 @@ import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { topic } from "./db/schema";
 import { eq, not } from "drizzle-orm";
-import { randomInt } from "crypto";
+import { randomUUID } from "crypto";
 import { mkdir, mkdirSync } from "node:fs";
 import dotenv from "dotenv";
 dotenv.config();
@@ -114,7 +114,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
     if (!noteurl)
       values = { name, status: schema.StatusEnum.enumValues[0], notePaths: [] };
     else {
-      let result = await saveFile(name, 1, noteurl);
+      let result = await saveFile(name, [], noteurl);
       if (result == null)
         return new Response(
           JSON.stringify({ err: "Error while saving the file", status: 500 }),
@@ -161,8 +161,7 @@ async function AddNote(reqmethod: string, url: URL) {
         status: 204,
       });
 
-      
-    let result = await saveFile(name, records[0].notePaths.length + 1, noteurl);
+    let result = await saveFile(name, records[0].notePaths, noteurl);
     if (result == null)
       return new Response(
         JSON.stringify({ err: "Error while saving the file", status: 500 }),
@@ -170,7 +169,6 @@ async function AddNote(reqmethod: string, url: URL) {
       );
 
     let arr = [...records[0].notePaths, result];
-
 
     await db.update(topic).set({ notePaths: arr }).where(eq(topic.name, name));
 
@@ -208,7 +206,19 @@ function ChangeStatus(reqmethod: string, url: URL) {
   return new Response();
 }
 
-async function saveFile(name: string, count: number, downurl: string) {
+async function saveFile(
+  Topicname: string,
+  filelist: string[],
+  downurl: string
+) {
+  // Looks for Unique name for file
+  let filename = randomUUID() + ".png";
+  filelist.forEach((file) => {
+    if (file == filename) {
+      return saveFile(Topicname, filelist, downurl);
+    }
+  });
+
   try {
     const res = await fetch(downurl);
     const contenttype = res.headers.get("content-type");
@@ -216,8 +226,11 @@ async function saveFile(name: string, count: number, downurl: string) {
     if (!contenttype) return null;
     if (!contenttype.startsWith("image")) return null;
 
-    await Bun.write(`${notesfolder}/${name}/${count}.png`, await res.blob());
-    return `${notesfolder}/${name}/${count}.png`;
+    await Bun.write(
+      `${notesfolder}/${Topicname}/${filename}`,
+      await res.blob()
+    );
+    return filename;
   } catch (err) {
     console.error(err);
     return null;
