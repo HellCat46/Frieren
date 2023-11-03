@@ -26,7 +26,7 @@ const server = Bun.serve({
 
     // Checks for all the endpoints
     if (req.method == "GET" && path == "/") res = Root(req.method);
-    else if (path == "/getnote") res = GetNote(req.method, url);
+    else if (path == "/getpage") res = GetPage(req.method, url);
     else if (path == "/listtopic") res = ListTopics(req.method);
     else if (path == "/create") res = CreateTopic(req.method, url);
     else if (path == "/addnote") res = AddNote(req.method, url);
@@ -45,13 +45,37 @@ function Root(reqmethod: string) {
 }
 
 // Returns the image url of given page no
-function GetNote(reqmethod: string, url: URL) {
+async function GetPage(reqmethod: string, url: URL) {
   if (reqmethod != "GET") return new Response("", { status: 405 });
 
   let name = url.searchParams.get("name");
-  let pageno = url.searchParams.get("pageno");
+  let pagepara =  url.searchParams.get("pageno");
 
-  return new Response();
+  if (!name || !pagepara)
+    return new Response("Missing or empty required query string", {
+      status: 400,
+    });
+  try {
+    let pageno = parseInt(pagepara);
+    let result = await db
+      .select({ name: topic.name, notePaths: topic.notePaths })
+      .from(topic)
+      .where(eq(topic.name, name));
+
+    if (result.length == 0)
+      return new Response("Topic doesn't exist.", {
+        status: 204,
+      });
+    else if(result[0].notePaths.length == 0)
+      return new Response("Zero pages for the topic", {status : 204});
+    else if(pageno <=0 || result[0].notePaths.length < pageno)
+      return new Response("Page doesn't exist", {status : 204});
+
+    return new Response(Bun.file(`${notesfolder}/${result[0].name}/${result[0].notePaths[pageno-1]}`))
+  } catch (err) {
+    console.error(err);
+    return new Response("", {status : 500});
+  }
 }
 
 // Returns List of topic with only topic's id and name
