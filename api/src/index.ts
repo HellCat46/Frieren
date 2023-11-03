@@ -39,22 +39,26 @@ const server = Bun.serve({
 });
 
 function Root(reqmethod: string) {
-  if (reqmethod != "GET") return new Response("", { status: 405 }); // Check for proper http method
-
-  return new Response(JSON.stringify({ status: 200, message: "Hello" }));
+  return new Response(JSON.stringify({  message: "Hello" }));
 }
 
 // Returns the image url of given page no
 async function GetPage(reqmethod: string, url: URL) {
-  if (reqmethod != "GET") return new Response("", { status: 405 });
+  if (reqmethod != "GET")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    }); // Check for proper http method
 
   let name = url.searchParams.get("name");
-  let pagepara =  url.searchParams.get("pageno");
+  let pagepara = url.searchParams.get("pageno");
 
   if (!name || !pagepara)
-    return new Response("Missing or empty required query string", {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing or empty required query string" }),
+      {
+        status: 400,
+      }
+    );
   try {
     let pageno = parseInt(pagepara);
     let result = await db
@@ -63,24 +67,33 @@ async function GetPage(reqmethod: string, url: URL) {
       .where(eq(topic.name, name));
 
     if (result.length == 0)
-      return new Response("Topic doesn't exist.", {
+      return new Response(JSON.stringify({ error: "Topic doesn't exist." }), {
         status: 204,
       });
-    else if(result[0].pagePaths.length == 0)
-      return new Response("Zero pages for the topic", {status : 204});
-    else if(pageno <=0 || result[0].pagePaths.length < pageno)
-      return new Response("Page doesn't exist", {status : 204});
+    else if (result[0].pagePaths.length == 0)
+      return new Response(
+        JSON.stringify({ error: "Zero pages for the topic" }),
+        { status: 204 }
+      );
+    else if (pageno <= 0 || result[0].pagePaths.length < pageno)
+      return new Response(JSON.stringify({ error: "Page doesn't exist" }), {
+        status: 204,
+      });
 
-    return new Response(Bun.file(`${notesfolder}/${result[0].name}/${result[0].pagePaths[pageno-1]}`))
+    return new Response(
+      Bun.file(
+        `${notesfolder}/${result[0].name}/${result[0].pagePaths[pageno - 1]}`
+      )
+    );
   } catch (err) {
     console.error(err);
-    return new Response("", {status : 500});
+    return new Response(JSON.stringify({ error: err }), { status: 500 });
   }
 }
 
 // Returns List of topic with only topic's id and name
 async function ListTopics(reqmethod: string) {
-  if (reqmethod != "GET") return new Response("", { status: 405 });
+  if (reqmethod != "GET") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
 
   try {
     // Gets all the topics except archived ones
@@ -95,21 +108,21 @@ async function ListTopics(reqmethod: string) {
       ...records.map((item) => ({ [item.id]: item.name }))
     );
 
-    return new Response(JSON.stringify(listobj), { status: 200 });
+    return new Response(JSON.stringify(listobj));
   } catch (err) {
     console.error(err);
-    return new Response("", { status: 500 });
+    return new Response(JSON.stringify({error:err}), { status: 500 });
   }
 }
 
 // Creates a new topic in database and returns it's id
 // Also creates a folder in "files" directory to save Topic's notes
 async function CreateTopic(reqmethod: string, url: URL) {
-  if (reqmethod != "POST") return new Response("", { status: 405 }); // Check for proper http method
+  if (reqmethod != "POST") return new Response(JSON.stringify({error : "Method Not Allowed"}), { status: 405 }); // Check for proper http method
 
   let name = url.searchParams.get("name");
   if (!name)
-    return new Response("Missing or empty required query string", {
+    return new Response(JSON.stringify({error: "Missing or empty required query string"}), {
       status: 400,
     });
 
@@ -123,7 +136,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
           .where(eq(topic.name, name))
       ).length > 0
     ) {
-      return new Response("Topic already exist with this name", {
+      return new Response(JSON.stringify({error:"Topic already exist with this name"}), {
         status: 409,
       });
     }
@@ -131,7 +144,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
     mkdir(`${notesfolder}/${name}`, (err) => {
       if (err)
         return new Response(
-          JSON.stringify({ status: 500, error: err.message }),
+          JSON.stringify({error: err.message }),
           { status: 500 }
         );
     });
@@ -144,7 +157,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
       let result = await saveFile(name, [], pageurl);
       if (result == null)
         return new Response(
-          JSON.stringify({ err: "Error while saving the file", status: 500 }),
+          JSON.stringify({ err: "Error while saving the file"}),
           { status: 500 }
         );
 
@@ -158,7 +171,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
       await db.insert(topic).values(values).returning({ id: topic.id })
     )[0].id;
 
-    return new Response(JSON.stringify({ id, status: 200 }));
+    return new Response(JSON.stringify({ id }));
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: err }), { status: 500 });
@@ -168,12 +181,12 @@ async function CreateTopic(reqmethod: string, url: URL) {
 // Adds more pages to already created topic
 // Returns total number of pages for the topic
 async function AddPage(reqmethod: string, url: URL) {
-  if (reqmethod != "PATCH") return new Response("", { status: 405 });
+  if (reqmethod != "PATCH") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
 
   let name = url.searchParams.get("name");
   let pageurl = url.searchParams.get("pageurl");
   if (!name || !pageurl) {
-    return new Response("Missing or empty required query string", {
+    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
   }
@@ -184,14 +197,14 @@ async function AddPage(reqmethod: string, url: URL) {
       .from(topic)
       .where(eq(topic.name, name));
     if (records.length == 0)
-      return new Response("Topic doesn't exist.", {
+      return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
         status: 204,
       });
 
     let result = await saveFile(name, records[0].pagePaths, pageurl);
     if (result == null)
       return new Response(
-        JSON.stringify({ err: "Error while saving the file", status: 500 }),
+        JSON.stringify({ err: "Error while saving the file" }),
         { status: 500 }
       );
 
@@ -200,33 +213,33 @@ async function AddPage(reqmethod: string, url: URL) {
     await db.update(topic).set({ pagePaths: arr }).where(eq(topic.name, name));
 
     return new Response(
-      JSON.stringify({ page_count: arr.length, status: 200 })
+      JSON.stringify({ page_count: arr.length})
     );
   } catch (err) {
     console.error(err);
-    return new Response("", { status: 500 });
+    return new Response(JSON.stringify({error:err}), { status: 500 });
   }
 }
 
 // Remove a page from the topic records
 async function RemovePage(reqmethod: string, url: URL) {
-  if (reqmethod != "DELETE") return new Response("", { status: 405 });
+  if (reqmethod != "DELETE") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
 
   let name = url.searchParams.get("name");
   let pagepara = url.searchParams.get("pageno");
   if (!name || !pagepara) 
-    return new Response("Missing or empty required query string", {
+    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
 
   try {
     let result = await db.select({pagePaths : topic.pagePaths}).from(topic).where(eq(topic.name, name));
     if (result.length == 0)
-      return new Response("Topic doesn't exist.", {
+      return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
         status: 204,
       });
     else if (result[0].pagePaths.length == 0)
-      return new Response("Zero pages for the topic", { status: 204 });
+      return new Response(JSON.stringify({error:"Zero pages for the topic"}), { status: 204 });
 
 
 
@@ -235,7 +248,7 @@ async function RemovePage(reqmethod: string, url: URL) {
 
 
     unlink(`${notesfolder}/${name}/${page}`, (err) => {
-      if (err) return new Response(err.message, { status: 500 });
+      if (err) return new Response(JSON.stringify({error:err.message}), { status: 500 });
     });
     
     await db
@@ -243,10 +256,10 @@ async function RemovePage(reqmethod: string, url: URL) {
       .set({ pagePaths: result[0].pagePaths.filter((pname) => pname != page) })
       .where(eq(topic.name, name));
     
-    return new Response("", {status : 200});
+    return new Response("");
   }catch(err){
     console.error(err);
-    return new Response("", {status : 500});
+    return new Response(JSON.stringify({error: err}), {status : 500});
   }
 }
 
@@ -256,12 +269,12 @@ Closed will not allow adding more pages
 Archive will create a pdf from all the topic's page and return it
 */
 function ChangeStatus(reqmethod: string, url: URL) {
-  if (reqmethod != "PATCH") return new Response("", { status: 405 });
+  if (reqmethod != "PATCH") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
 
   let topicName = url.searchParams.get("name");
   let status = url.searchParams.get("status");
   if (!topicName || !status)
-    return new Response("Missing or empty required query string", {
+    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
 
