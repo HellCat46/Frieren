@@ -11,8 +11,4 @@ export const topic = pgTable("topic", {
     status : StatusEnum("_status").notNull(),
     notePaths : varchar("_notePaths", {length: 50}).array().notNull(),
     archivepath : varchar("_archivePath", {length : 50})
-}, (notes) => {
-    return {
-        idx : uniqueIndex("name_idx").on(notes.name)
-    }
 })
