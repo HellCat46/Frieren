@@ -2,7 +2,7 @@ import * as schema from "./db/schema";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { topic } from "./db/schema";
-import { eq, not } from "drizzle-orm";
+import { Table, eq, not } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { mkdir, mkdirSync, unlink } from "node:fs";
 import dotenv from "dotenv";
@@ -11,35 +11,53 @@ dotenv.config();
 const pClient = postgres(process.env.CONSTR!, { max: 100 });
 const db = drizzle(pClient, { schema });
 
-let notesfolder = "files/notes";
-let archivefolder = "files/archive";
+const notesfolder = "files/notes";
+const archivefolder = "files/archive";
 
 mkdirSync(notesfolder, { recursive: true });
 mkdirSync(archivefolder, { recursive: true });
 
 const server = Bun.serve({
+  hostname : "0.0.0.0",
   port: 3000,
   async fetch(req) {
     const url = new URL(req.url);
-    const path = url.pathname;
-    let res;
 
     // Checks for all the endpoints
-    if (req.method == "GET" && path == "/") res = Root(req.method);
-    else if (path == "/getpage") res = GetPage(req.method, url);
-    else if (path == "/listtopic") res = ListTopics(req.method);
-    else if (path == "/create") res = CreateTopic(req.method, url);
-    else if (path == "/addpage") res = AddPage(req.method, url);
-    else if (path == "/removepage") res = RemovePage(req.method, url);
-    else if (path == "/chngstatus") res = ChangeStatus(req.method, url);
-    else res = new Response("", { status: 404 });
-
-    return res;
+    if (url.pathname == "/") return Root(req.method);
+    else if (url.pathname == "/listtopic") return ListTopics(req.method);
+    else if (url.pathname == "/getpage") return GetPage(req.method, url);
+    else if (url.pathname == "/create") return CreateTopic(req.method, url);
+    else if (url.pathname == "/addpage") return AddPage(req.method, url);
+    else if (url.pathname == "/removepage") return RemovePage(req.method, url);
+    else if (url.pathname == "/chngstatus")
+      return ChangeStatus(req.method, url);
+    else if (url.pathname.startsWith("/files"))
+      return FileRouter(req.method, url.pathname);
+    else return new Response("", { status: 404 });
   },
 });
 
 function Root(reqmethod: string) {
   return new Response(JSON.stringify({  message: "Hello" }));
+}
+
+// Returns List of topic with only topic's id and name
+async function ListTopics(reqmethod: string) {
+  if (reqmethod != "GET") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
+
+  try {
+    // Gets all the topics except archived ones
+    const records = await db
+      .select({ id: topic.id, name: topic.name, active_page : topic.active_page })
+      .from(topic)
+      .where(not(eq(topic.status, schema.StatusEnum.enumValues[2])));
+
+    return new Response(JSON.stringify({list : records}));
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({error:err}), { status: 500 });
+  }
 }
 
 // Returns the image url of given page no
@@ -49,22 +67,24 @@ async function GetPage(reqmethod: string, url: URL) {
       status: 405,
     }); // Check for proper http method
 
-  let name = url.searchParams.get("name");
-  let pagepara = url.searchParams.get("pageno");
-
-  if (!name || !pagepara)
+  const id =  url.searchParams.get("id");
+  const page = url.searchParams.get("pageno");
+  if (!id || !page)
     return new Response(
       JSON.stringify({ error: "Missing or empty required query string" }),
       {
         status: 400,
       }
     );
+
+
   try {
-    let pageno = parseInt(pagepara);
-    let result = await db
-      .select({ name: topic.name, pagePaths: topic.pagePaths })
+    const pageno = +page;
+    const result = await db
+      .select({ pagePaths: topic.pagePaths })
       .from(topic)
-      .where(eq(topic.name, name));
+      .where(eq(topic.id, +id));
+
 
     if (result.length == 0)
       return new Response(JSON.stringify({ error: "Topic doesn't exist." }), {
@@ -80,38 +100,13 @@ async function GetPage(reqmethod: string, url: URL) {
         status: 204,
       });
 
-    return new Response(
-      Bun.file(
-        `${notesfolder}/${result[0].name}/${result[0].pagePaths[pageno - 1]}`
-      )
-    );
+
+    return new Response(JSON.stringify({link : `http://${url.hostname}:${url.port}/files/notes/${id}/${
+        result[0].pagePaths[pageno - 1]
+      }`}));
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: err }), { status: 500 });
-  }
-}
-
-// Returns List of topic with only topic's id and name
-async function ListTopics(reqmethod: string) {
-  if (reqmethod != "GET") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
-
-  try {
-    // Gets all the topics except archived ones
-    let records = await db
-      .select({ id: topic.id, name: topic.name })
-      .from(topic)
-      .where(not(eq(topic.status, schema.StatusEnum.enumValues[2])));
-
-    // Merge all the properties from array of object into one object
-    let listobj = Object.assign(
-      {},
-      ...records.map((item) => ({ [item.id]: item.name }))
-    );
-
-    return new Response(JSON.stringify(listobj));
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({error:err}), { status: 500 });
   }
 }
 
@@ -120,57 +115,45 @@ async function ListTopics(reqmethod: string) {
 async function CreateTopic(reqmethod: string, url: URL) {
   if (reqmethod != "POST") return new Response(JSON.stringify({error : "Method Not Allowed"}), { status: 405 }); // Check for proper http method
 
-  let name = url.searchParams.get("name");
+  const name = url.searchParams.get("name");
+  const pageurl = url.searchParams.get("pageurl");
   if (!name)
     return new Response(JSON.stringify({error: "Missing or empty required query string"}), {
       status: 400,
     });
 
-  let pageurl = url.searchParams.get("pageurl");
+  
   try {
     if (
       (
         await db
-          .select({ name: topic.name })
+          .select()
           .from(topic)
           .where(eq(topic.name, name))
       ).length > 0
-    ) {
-      return new Response(JSON.stringify({error:"Topic already exist with this name"}), {
+    ) return new Response(JSON.stringify({error:"Topic already exist with this name"}), {
         status: 409,
       });
-    }
 
-    mkdir(`${notesfolder}/${name}`, (err) => {
-      if (err)
-        return new Response(
-          JSON.stringify({error: err.message }),
-          { status: 500 }
-        );
-    });
 
-    // Checks if first page url is provided or not and creat values object accordingly
-    let values;
-    if (!pageurl)
-      values = { name, status: schema.StatusEnum.enumValues[0], pagePaths: [] };
-    else {
-      let result = await saveFile(name, [], pageurl);
-      if (result == null)
-        return new Response(
-          JSON.stringify({ err: "Error while saving the file"}),
-          { status: 500 }
-        );
-
-      values = {
-        name,
-        status: schema.StatusEnum.enumValues[0],
-        pagePaths: [result],
+    const id = (await db.insert(topic).values({name,status: schema.StatusEnum.enumValues[0],pagePaths: []}).returning({ id: topic.id }))[0].id;
+    mkdir(`${notesfolder}/${id}`, async (err) => {
+      if (err) {
+        await db.delete(topic).where(eq(topic.id, id));
+        throw err
       };
-    }
-    let id = (
-      await db.insert(topic).values(values).returning({ id: topic.id })
-    )[0].id;
+    });
+    if(!pageurl) return new Response(JSON.stringify({ id }));
 
+
+    const result = await saveFile(id, [], pageurl);
+    if (result == null)
+      return new Response(
+        JSON.stringify({ err: "Error while saving the file"}),
+          { status: 500 }
+      );
+
+    await db.update(topic).set({pagePaths : [result]})
     return new Response(JSON.stringify({ id }));
   } catch (err) {
     console.error(err);
@@ -183,34 +166,34 @@ async function CreateTopic(reqmethod: string, url: URL) {
 async function AddPage(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
 
-  let name = url.searchParams.get("name");
-  let pageurl = url.searchParams.get("pageurl");
-  if (!name || !pageurl) {
+  const id = url.searchParams.get("id");
+  const pageurl = url.searchParams.get("pageurl");
+  if (!id || !pageurl) {
     return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
   }
 
   try {
-    let records = await db
-      .select({ pagePaths: topic.pagePaths })
+    const records = await db
+      .select({pagePaths: topic.pagePaths })
       .from(topic)
-      .where(eq(topic.name, name));
+      .where(eq(topic.id, +id));
     if (records.length == 0)
       return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
         status: 204,
       });
 
-    let result = await saveFile(name, records[0].pagePaths, pageurl);
+    const result = await saveFile(+id, records[0].pagePaths, pageurl);
     if (result == null)
       return new Response(
         JSON.stringify({ err: "Error while saving the file" }),
         { status: 500 }
       );
 
-    let arr = [...records[0].pagePaths, result];
+    const arr = [...records[0].pagePaths, result];
 
-    await db.update(topic).set({ pagePaths: arr }).where(eq(topic.name, name));
+    await db.update(topic).set({ pagePaths: arr }).where(eq(topic.id, +id));
 
     return new Response(
       JSON.stringify({ page_count: arr.length})
@@ -225,15 +208,15 @@ async function AddPage(reqmethod: string, url: URL) {
 async function RemovePage(reqmethod: string, url: URL) {
   if (reqmethod != "DELETE") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
 
-  let name = url.searchParams.get("name");
-  let pagepara = url.searchParams.get("pageno");
-  if (!name || !pagepara) 
+  const id = url.searchParams.get("id");
+  const pageno = url.searchParams.get("pageno");
+  if (!id || !pageno) 
     return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
 
   try {
-    let result = await db.select({pagePaths : topic.pagePaths}).from(topic).where(eq(topic.name, name));
+    const result = await db.select({pagePaths : topic.pagePaths}).from(topic).where(eq(topic.id, +id));
     if (result.length == 0)
       return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
         status: 204,
@@ -243,18 +226,17 @@ async function RemovePage(reqmethod: string, url: URL) {
 
 
 
-    let page = result[0].pagePaths[parseInt(pagepara)-1];
-    console.log(result[0].pagePaths, `${notesfolder}/${name}/${page}`);
+    const page = result[0].pagePaths[(+pageno)-1];
 
 
-    unlink(`${notesfolder}/${name}/${page}`, (err) => {
+    unlink(`${notesfolder}/${id}/${page}`, (err) => {
       if (err) return new Response(JSON.stringify({error:err.message}), { status: 500 });
     });
     
     await db
       .update(topic)
       .set({ pagePaths: result[0].pagePaths.filter((pname) => pname != page) })
-      .where(eq(topic.name, name));
+      .where(eq(topic.id, +id));
     
     return new Response("");
   }catch(err){
@@ -271,9 +253,9 @@ Archive will create a pdf from all the topic's page and return it
 function ChangeStatus(reqmethod: string, url: URL) {
   if (reqmethod != "PATCH") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
 
-  let topicName = url.searchParams.get("name");
-  let status = url.searchParams.get("status");
-  if (!topicName || !status)
+  const id = url.searchParams.get("id");
+  const status = url.searchParams.get("status");
+  if (!id || !status)
     return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
       status: 400,
     });
@@ -281,16 +263,22 @@ function ChangeStatus(reqmethod: string, url: URL) {
   return new Response();
 }
 
+async function FileRouter(reqmethod : string, path : string) {
+  if(reqmethod != "GET") return new Response(JSON.stringify({error : "Method Not Allowed"}), {status : 405});
+
+  return new Response(Bun.file(path.substring(1, path.length)));
+}
+
 async function saveFile(
-  Topicname: string,
+  TopicId : number,
   filelist: string[],
   downurl: string
 ) {
   // Looks for Unique name for file
-  let filename = randomUUID() + ".png";
+  const filename = randomUUID() + ".png";
   filelist.forEach((file) => {
     if (file == filename) {
-      return saveFile(Topicname, filelist, downurl);
+      return saveFile(TopicId, filelist, downurl);
     }
   });
 
@@ -302,7 +290,7 @@ async function saveFile(
     if (!contenttype.startsWith("image")) return null;
 
     await Bun.write(
-      `${notesfolder}/${Topicname}/${filename}`,
+      `${notesfolder}/${TopicId}/${filename}`,
       await res.blob()
     );
     return filename;
@@ -311,4 +299,4 @@ async function saveFile(
     return null;
   }
 }
-console.log(`Listening on http://localhost:${server.port} ...`);
+console.log(`Listening on http://${server.hostname}:${server.port} ...`);
