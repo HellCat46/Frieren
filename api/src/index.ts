@@ -18,7 +18,7 @@ mkdirSync(notesfolder, { recursive: true });
 mkdirSync(archivefolder, { recursive: true });
 
 const server = Bun.serve({
-  hostname : "0.0.0.0",
+  hostname: "0.0.0.0",
   port: 3000,
   async fetch(req) {
     const url = new URL(req.url);
@@ -39,24 +39,31 @@ const server = Bun.serve({
 });
 
 function Root(reqmethod: string) {
-  return new Response(JSON.stringify({  message: "Hello" }));
+  return new Response(JSON.stringify({ message: "Hello" }));
 }
 
 // Returns List of topic with only topic's id and name
 async function ListTopics(reqmethod: string) {
-  if (reqmethod != "GET") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
+  if (reqmethod != "GET")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    });
 
   try {
     // Gets all the topics except archived ones
     const records = await db
-      .select({ id: topic.id, name: topic.name, active_page : topic.active_page })
+      .select({
+        id: topic.id,
+        name: topic.name,
+        active_page: topic.active_page,
+      })
       .from(topic)
       .where(not(eq(topic.status, schema.StatusEnum.enumValues[2])));
 
-    return new Response(JSON.stringify({list : records}));
+    return new Response(JSON.stringify({ list: records }));
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({error:err}), { status: 500 });
+    return new Response(JSON.stringify({ error: err }), { status: 500 });
   }
 }
 
@@ -67,7 +74,7 @@ async function GetPage(reqmethod: string, url: URL) {
       status: 405,
     }); // Check for proper http method
 
-  const id =  url.searchParams.get("id");
+  const id = url.searchParams.get("id");
   const page = url.searchParams.get("pageno");
   if (!id || !page)
     return new Response(
@@ -77,14 +84,12 @@ async function GetPage(reqmethod: string, url: URL) {
       }
     );
 
-
   try {
     const pageno = +page;
     const result = await db
       .select({ pagePaths: topic.pagePaths })
       .from(topic)
       .where(eq(topic.id, +id));
-
 
     if (result.length == 0)
       return new Response(JSON.stringify({ error: "Topic doesn't exist." }), {
@@ -100,10 +105,13 @@ async function GetPage(reqmethod: string, url: URL) {
         status: 204,
       });
 
-
-    return new Response(JSON.stringify({link : `http://${url.hostname}:${url.port}/files/notes/${id}/${
-        result[0].pagePaths[pageno - 1]
-      }`}));
+    return new Response(
+      JSON.stringify({
+        link: `http://${url.hostname}:${url.port}/files/notes/${id}/${
+          result[0].pagePaths[pageno - 1]
+        }`,
+      })
+    );
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: err }), { status: 500 });
@@ -113,47 +121,56 @@ async function GetPage(reqmethod: string, url: URL) {
 // Creates a new topic in database and returns it's id
 // Also creates a folder in "files" directory to save Topic's notes
 async function CreateTopic(reqmethod: string, url: URL) {
-  if (reqmethod != "POST") return new Response(JSON.stringify({error : "Method Not Allowed"}), { status: 405 }); // Check for proper http method
+  if (reqmethod != "POST")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    }); // Check for proper http method
 
   const name = url.searchParams.get("name");
   const pageurl = url.searchParams.get("pageurl");
   if (!name)
-    return new Response(JSON.stringify({error: "Missing or empty required query string"}), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing or empty required query string" }),
+      {
+        status: 400,
+      }
+    );
 
-  
   try {
-    if (
-      (
-        await db
-          .select()
-          .from(topic)
-          .where(eq(topic.name, name))
-      ).length > 0
-    ) return new Response(JSON.stringify({error:"Topic already exist with this name"}), {
-        status: 409,
-      });
+    if ((await db.select().from(topic).where(eq(topic.name, name))).length > 0)
+      return new Response(
+        JSON.stringify({ error: "Topic already exist with this name" }),
+        {
+          status: 409,
+        }
+      );
 
-
-    const id = (await db.insert(topic).values({name,status: schema.StatusEnum.enumValues[0],pagePaths: []}).returning({ id: topic.id }))[0].id;
+    const id = (
+      await db
+        .insert(topic)
+        .values({
+          name,
+          status: schema.StatusEnum.enumValues[0],
+          pagePaths: [],
+        })
+        .returning({ id: topic.id })
+    )[0].id;
     mkdir(`${notesfolder}/${id}`, async (err) => {
       if (err) {
         await db.delete(topic).where(eq(topic.id, id));
-        throw err
-      };
+        throw err;
+      }
     });
-    if(!pageurl) return new Response(JSON.stringify({ id }));
-
+    if (!pageurl) return new Response(JSON.stringify({ id }));
 
     const result = await saveFile(id, [], pageurl);
     if (result == null)
       return new Response(
-        JSON.stringify({ err: "Error while saving the file"}),
-          { status: 500 }
+        JSON.stringify({ err: "Error while saving the file" }),
+        { status: 500 }
       );
 
-    await db.update(topic).set({pagePaths : [result]})
+    await db.update(topic).set({ pagePaths: [result] });
     return new Response(JSON.stringify({ id }));
   } catch (err) {
     console.error(err);
@@ -164,23 +181,29 @@ async function CreateTopic(reqmethod: string, url: URL) {
 // Adds more pages to already created topic
 // Returns total number of pages for the topic
 async function AddPage(reqmethod: string, url: URL) {
-  if (reqmethod != "PATCH") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
+  if (reqmethod != "PATCH")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    });
 
   const id = url.searchParams.get("id");
   const pageurl = url.searchParams.get("pageurl");
   if (!id || !pageurl) {
-    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing or empty required query string" }),
+      {
+        status: 400,
+      }
+    );
   }
 
   try {
     const records = await db
-      .select({pagePaths: topic.pagePaths })
+      .select({ pagePaths: topic.pagePaths })
       .from(topic)
       .where(eq(topic.id, +id));
     if (records.length == 0)
-      return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
+      return new Response(JSON.stringify({ error: "Topic doesn't exist." }), {
         status: 204,
       });
 
@@ -195,53 +218,63 @@ async function AddPage(reqmethod: string, url: URL) {
 
     await db.update(topic).set({ pagePaths: arr }).where(eq(topic.id, +id));
 
-    return new Response(
-      JSON.stringify({ page_count: arr.length})
-    );
+    return new Response(JSON.stringify({ page_count: arr.length }));
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({error:err}), { status: 500 });
+    return new Response(JSON.stringify({ error: err }), { status: 500 });
   }
 }
 
 // Remove a page from the topic records
 async function RemovePage(reqmethod: string, url: URL) {
-  if (reqmethod != "DELETE") return new Response(JSON.stringify({error:"Method Not Allowed"}), { status: 405 });
+  if (reqmethod != "DELETE")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    });
 
   const id = url.searchParams.get("id");
   const pageno = url.searchParams.get("pageno");
-  if (!id || !pageno) 
-    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
-      status: 400,
-    });
+  if (!id || !pageno)
+    return new Response(
+      JSON.stringify({ error: "Missing or empty required query string" }),
+      {
+        status: 400,
+      }
+    );
 
   try {
-    const result = await db.select({pagePaths : topic.pagePaths}).from(topic).where(eq(topic.id, +id));
+    const result = await db
+      .select({ pagePaths: topic.pagePaths })
+      .from(topic)
+      .where(eq(topic.id, +id));
     if (result.length == 0)
-      return new Response(JSON.stringify({error:"Topic doesn't exist."}), {
+      return new Response(JSON.stringify({ error: "Topic doesn't exist." }), {
         status: 204,
       });
     else if (result[0].pagePaths.length == 0)
-      return new Response(JSON.stringify({error:"Zero pages for the topic"}), { status: 204 });
+      return new Response(
+        JSON.stringify({ error: "Zero pages for the topic" }),
+        { status: 204 }
+      );
 
-
-
-    const page = result[0].pagePaths[(+pageno)-1];
-
+    const page = result[0].pagePaths[+pageno - 1];
 
     unlink(`${notesfolder}/${id}/${page}`, (err) => {
-      if (err) return new Response(JSON.stringify({error:err.message}), { status: 500 });
+      if (err)
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+        });
     });
-    
+
     await db
       .update(topic)
       .set({ pagePaths: result[0].pagePaths.filter((pname) => pname != page) })
       .where(eq(topic.id, +id));
-    
+
     return new Response("");
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({error: err}), {status : 500});
+    return new Response(JSON.stringify({ error: err }), { status: 500 });
   }
 }
 
@@ -251,29 +284,34 @@ Closed will not allow adding more pages
 Archive will create a pdf from all the topic's page and return it
 */
 function ChangeStatus(reqmethod: string, url: URL) {
-  if (reqmethod != "PATCH") return new Response(JSON.stringify({error: "Method Not Allowed"}), { status: 405 });
+  if (reqmethod != "PATCH")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    });
 
   const id = url.searchParams.get("id");
   const status = url.searchParams.get("status");
   if (!id || !status)
-    return new Response(JSON.stringify({error:"Missing or empty required query string"}), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Missing or empty required query string" }),
+      {
+        status: 400,
+      }
+    );
 
   return new Response();
 }
 
-async function FileRouter(reqmethod : string, path : string) {
-  if(reqmethod != "GET") return new Response(JSON.stringify({error : "Method Not Allowed"}), {status : 405});
+async function FileRouter(reqmethod: string, path: string) {
+  if (reqmethod != "GET")
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+    });
 
   return new Response(Bun.file(path.substring(1, path.length)));
 }
 
-async function saveFile(
-  TopicId : number,
-  filelist: string[],
-  downurl: string
-) {
+async function saveFile(TopicId: number, filelist: string[], downurl: string) {
   // Looks for Unique name for file
   const filename = randomUUID() + ".png";
   filelist.forEach((file) => {
@@ -289,10 +327,7 @@ async function saveFile(
     if (!contenttype) return null;
     if (!contenttype.startsWith("image")) return null;
 
-    await Bun.write(
-      `${notesfolder}/${TopicId}/${filename}`,
-      await res.blob()
-    );
+    await Bun.write(`${notesfolder}/${TopicId}/${filename}`, await res.blob());
     return filename;
   } catch (err) {
     console.error(err);
