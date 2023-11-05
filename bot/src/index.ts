@@ -2,11 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   Client,
-  Events,
   IntentsBitField,
   Collection,
-  CommandInteraction,
-  Interaction,
 } from "discord.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,7 +11,6 @@ dotenv.config();
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds] });
 
 client.commands = new Collection();
-client.Topics = new Array();
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
@@ -27,7 +23,7 @@ for (const file of commandFiles) {
   if ("data" in command && "execute" in command) {
     client.commands.set(command.data.name, command);
   } else {
-    console.log(`${filePath} is missing a required some properties.`);
+    console.warn(`${filePath} is missing a required some properties.`);
   }
 }
 
