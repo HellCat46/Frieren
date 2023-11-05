@@ -55,12 +55,18 @@ async function ListTopics(reqmethod: string) {
       .select({
         id: topic.id,
         name: topic.name,
-        active_page: topic.active_page,
+        pagePaths: topic.pagePaths,
       })
       .from(topic)
       .where(not(eq(topic.status, schema.StatusEnum.enumValues[2])));
-
-    return new Response(JSON.stringify({ list: records }));
+    
+    
+    return new Response(
+      JSON.stringify({
+        list: records.map((record) => new Object({id : record.id, name : record.name, page_count : record.pagePaths.length})
+        ),
+      })
+    );
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: err }), { status: 500 });
@@ -137,7 +143,7 @@ async function CreateTopic(reqmethod: string, url: URL) {
     );
 
   try {
-    if ((await db.select().from(topic).where(eq(topic.name, name))).length > 0)
+    if ((await db.select({id : topic.id}).from(topic).where(eq(topic.name, name))).length > 0)
       return new Response(
         JSON.stringify({ error: "Topic already exist with this name" }),
         {
