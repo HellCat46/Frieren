@@ -5,7 +5,6 @@ import {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-
 } from "discord.js";
 import { getPageLink } from "../../components/Requests";
 import { embedError } from "../../components/EmbedTemplate";
@@ -16,19 +15,17 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
   const topic = interaction.client.Topics.get(+key);
   if (!topic) return;
 
-      const inbed = interaction.message.embeds[0];
-      if (!inbed.footer) {
-        await interaction.reply({
-          embeds: [embedError("No ~~bitches~~ pages")],
-          ephemeral: true,
-        });
-        return;
-      }
-      const currentpage = +inbed.footer.text.split("")[0];
+  const inbed = interaction.message.embeds[0];
+  if (!inbed.footer) {
+    await interaction.reply({
+      embeds: [embedError("No pages")],
+      ephemeral: true,
+    });
+    return;
+  }
+  const currentpage = +inbed.footer.text.split(" ")[0];
 
   if (id.endsWith("back")) {
-
-
     const pageno = currentpage - 1;
     if (0 >= pageno) {
       await interaction.reply({
@@ -71,7 +68,6 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       .addComponents(actionrow);
     await interaction.showModal(modal);
   } else if (id.endsWith("forward")) {
-
     const pageno = currentpage + 1;
     if (topic.page_count < pageno) {
       await interaction.reply({

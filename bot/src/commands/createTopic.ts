@@ -38,7 +38,7 @@ module.exports = {
           name: topicName,
           page_count: 0,
         });
-        await interaction.editReply({embeds : [message.embed], components : [message.row1, message.row2]})
+        await interaction.editReply({embeds : [message.embed], components : [message.row2]})
       }
 
       return;
