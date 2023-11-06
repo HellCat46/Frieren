@@ -30,7 +30,7 @@ export async function addPage(
   try {
     const res = await fetch(
       `http://27.58.124.183:3000/addpage?id=${id}&pageurl=${pageurl}`,
-        { method: "PATCH" }
+      { method: "PATCH" }
     );
     if (res.status == 200) {
       const json: { page_count: number } = await res.json();
@@ -59,6 +59,26 @@ export async function getPageLink(
     } else {
       const json: { error: string } = await res.json();
       throw json.error;
+    }
+  } catch (err) {
+    console.error(err);
+    return `${err}`;
+  }
+}
+
+export async function removePage(
+  topicId: number,
+  pageno: string
+): Promise<number | string> {
+  try {
+    const res = await fetch(
+      `http://27.58.124.183:3000/removepage?id=${topicId}&pageno=${pageno}`,
+      { method: "DELETE" }
+    );
+    if (res.status == 200) {
+      return 0;
+    } else {
+      return res.status;
     }
   } catch (err) {
     console.error(err);

@@ -1,12 +1,14 @@
 import {
   ActionRowBuilder,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { addPage, getPageLink } from "../../components/Requests";
+import { addPage, getPageLink, removePage } from "../../components/Requests";
 import { embedError } from "../../components/EmbedTemplate";
 
 export async function ButtonEvents(interaction: ButtonInteraction) {
@@ -121,29 +123,27 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
     collector.on("collect", (msg) => {
       if (msg.attachments) {
         msg.attachments.forEach(async (attachment) => {
-            const res = await addPage(key, attachment.url);
-            if (typeof res === "number") {
-              count = res;
-              await interaction.followUp({
-                content: `${count}`,
-                ephemeral: true,
-              });
-            } else {
-              await interaction.followUp({
-                embeds: [
-                  embedError("Error while adding some of the images..."),
-                ],
-                ephemeral: true,
-              });
-              return;
-            }
+          const res = await addPage(key, attachment.url);
+          if (typeof res === "number") {
+            count = res;
+            await interaction.followUp({
+              content: `${count}`,
+              ephemeral: true,
+            });
+          } else {
+            await interaction.followUp({
+              embeds: [embedError("Error while adding some of the images...")],
+              ephemeral: true,
+            });
+            return;
+          }
         });
       }
     });
     collector.on("end", async (collection) => {
-
       console.log(`Collected ${collection.size} items`);
       collection.forEach((msg) => msg.delete());
+      await interaction.deleteReply();
       await interaction.followUp({
         embeds: [embed.setDescription("Timer Ended")],
         ephemeral: true,
@@ -164,7 +164,47 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       // });
     });
   } else if (id.endsWith("remove")) {
-    interaction.reply("Remove");
+    if (!inbed.footer || topic.page_count == 0) {
+      await interaction.followUp({
+        embeds: [embedError("No pages")],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const pageno = inbed.footer.text.split(" ")[0];
+    const res = await removePage(key, pageno);
+    if (res != 0) {
+      await interaction.followUp({
+        embeds: [embedError(`${res}`)],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    topic.page_count--;
+    interaction.client.Topics.set(key, {
+      name: topic.name,
+      page_count: topic.page_count,
+    });
+    if (topic.page_count == 0) {
+      interaction.update({
+        embeds: [EmbedBuilder.from(inbed).setImage(null).setFooter(null)],
+        components: [interaction.message.components[1]],
+      });
+      return;
+    }
+
+    interaction.update({
+      embeds: [
+        EmbedBuilder.from(inbed)
+          .setImage(await getPageLink(key, +pageno))
+          .setFooter({
+            text: `${pageno} of ${topic.page_count}`,
+          }),
+      ],
+      components: interaction.message.components,
+    });
   } else if (id.endsWith("advance")) {
     interaction.reply("Advance");
   }
