@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import { addPage, getPageLink, removePage } from "../../components/Requests";
 import { embedError } from "../../components/EmbedTemplate";
+import { randomInt } from "node:crypto";
 
 export async function ButtonEvents(interaction: ButtonInteraction) {
   const id = interaction.customId;
@@ -108,44 +109,52 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       components: interaction.message.components,
     });
   } else if (id.endsWith("add")) {
+    if (!interaction.channel) return;
+    const pin = randomInt(111111, 999999);
     let embed = new EmbedBuilder()
       .setTitle("Image Collector")
-      .setDescription("You have 1 minute to send all pages you want to add.");
-    if (!interaction.channel) return;
+      .setDescription("You have 2 minute to send all pages you want to add.")
+      .setFooter({
+        text: `Type \`STOP ${pin}\` to end collector immediately.`,
+      });
+
     await interaction.deferReply();
     await interaction.followUp({ embeds: [embed] });
 
     const collector = interaction.channel.createMessageCollector({
-      time: 60000,
+      time: 120000,
     });
-
     let count = topic.page_count;
-    collector.on("collect", (msg) => {
-      if (msg.attachments) {
-        msg.attachments.forEach(async (attachment) => {
-          const res = await addPage(interaction.client.api_url,key, attachment.url);
-          if (typeof res === "number") {
-            count = res;
-            await interaction.followUp({
-              content: `${count}`,
-              ephemeral: true,
-            });
-          } else {
-            await interaction.followUp({
-              embeds: [embedError("Error while adding some of the images...")],
-              ephemeral: true,
-            });
-            return;
-          }
-        });
+    collector.on("collect", async (msg) => {
+      if (interaction.user.id != msg.author.id || !msg.attachments) return;
+      if(msg.content == `STOP ${pin}`) {
+        collector.stop("Requested by user");
+        msg.delete();
+        return;
       }
+
+      for (const attachment of msg.attachments) {
+        const res = await addPage(
+          interaction.client.api_url,
+          key,
+          attachment[1].url
+        );
+
+        if (typeof res === "string") {
+          await interaction.followUp({
+            embeds: [embedError("Error while adding some of the images...")],
+            ephemeral: true,
+          });
+          return;
+        } 
+        count = res;
+      }
+      msg.delete();
     });
-    collector.on("end", async (collection) => {
-      console.log(`Collected ${collection.size} items`);
-      collection.forEach((msg) => msg.delete());
+    collector.on("end", async () => {
       await interaction.deleteReply();
       await interaction.followUp({
-        embeds: [embed.setDescription("Timer Ended")],
+        embeds: [embed.setDescription("Timer Ended").setFooter(null)],
         ephemeral: true,
       });
 
@@ -154,14 +163,18 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
         page_count: count,
       });
 
-      // await interaction.update({
-      //   embeds: [
-      //     EmbedBuilder.from(inbed).setFooter({
-      //       text: `${1} of ${count}`,
-      //     }),
-      //   ],
-      //   components : interaction.message.components
-      // });
+      await interaction.message.edit({
+        embeds: [
+          EmbedBuilder.from(inbed)
+            .setImage(
+              await getPageLink(interaction.client.api_url, key, 1)
+            )
+            .setFooter({
+              text: `${1} of ${count}`,
+            }),
+        ],
+        components: interaction.message.components,
+      });
     });
   } else if (id.endsWith("remove")) {
     if (!inbed.footer || topic.page_count == 0) {
@@ -187,6 +200,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       name: topic.name,
       page_count: topic.page_count,
     });
+
     if (topic.page_count == 0) {
       interaction.update({
         embeds: [EmbedBuilder.from(inbed).setImage(null).setFooter(null)],
