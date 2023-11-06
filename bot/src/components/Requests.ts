@@ -93,7 +93,6 @@ export async function removePage(
 export async function getTopics(
   apiurl: string
 ): Promise<Collection<number, { name: string; page_count: number }>> {
-  console.log(apiurl);
   const res = await fetch(`http://${apiurl}/listtopic`);
   let collection: Collection<number, { name: string; page_count: number }> =
     new Collection();
