@@ -24,7 +24,7 @@ module.exports = {
         const message = embedTopic(id, topic.name);
         await interaction.editReply({
           embeds: [message.embed],
-          components: [message.row2],
+          components: message.rows.slice(1),
         });
         return;
       }
@@ -36,6 +36,6 @@ module.exports = {
       }
       
       const message = embedTopic(id, topic.name, `1 of ${topic.page_count}`, link)
-      await interaction.editReply({embeds : [message.embed], components : [message.row1, message.row2]})
+      await interaction.editReply({embeds : [message.embed], components : message.rows})
     }
 };

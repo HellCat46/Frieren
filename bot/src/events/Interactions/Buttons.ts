@@ -206,6 +206,39 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       components: interaction.message.components,
     });
   } else if (id.endsWith("advance")) {
-    interaction.reply("Advance");
+    const embed = new EmbedBuilder()
+      .setTitle("Advance Options")
+      .setDescription("These options are only available for limited users.")
+      .setThumbnail(
+        "https://cdn.discordapp.com/attachments/1067033740154519612/1171085332565995630/memed-io-output.jpeg"
+      );
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setLabel("Open")
+        .setCustomId(`${key}.open`)
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setLabel("Close")
+        .setCustomId(`${key}.close`)
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setLabel("Delete")
+        .setCustomId(`${key}.delete`)
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setLabel("Archive")
+        .setCustomId(`${key}.archive`)
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setLabel("PDF Link")
+        .setStyle(ButtonStyle.Link)
+        .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4")
+    );
+    interaction.reply({
+      embeds: [embed],
+      components: [row],
+      ephemeral: true,
+    });
   }
 }

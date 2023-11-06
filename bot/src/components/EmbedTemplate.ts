@@ -37,12 +37,17 @@ export function embedTopic(id: number, title : string, footer ?: string, imageur
         .setCustomId(`${id}.remove`)
         .setLabel("Remove Page")
         .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId(`${id}.refresh`)
+        .setLabel("Refresh")
+        .setStyle(ButtonStyle.Primary)
+    );
 
+    const advance = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId(`${id}.advance`)
         .setLabel("Advance Options")
         .setStyle(ButtonStyle.Primary)
     );
-
-    return {embed : embed, row1 :  move, row2 : manage};
+    return {embed : embed, rows :  [move, manage, advance]};
 }

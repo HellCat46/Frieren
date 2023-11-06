@@ -38,7 +38,7 @@ module.exports = {
           name: topicName,
           page_count: 0,
         });
-        await interaction.editReply({embeds : [message.embed], components : [message.row2]})
+        await interaction.editReply({embeds : [message.embed], components : message.rows.slice(1)})
       }
 
       return;
@@ -59,6 +59,6 @@ module.exports = {
     const message = embedTopic(res.id, topicName, "1 of 1", link);
     interaction.options.client.Topics.set(res.id, {name : topicName, page_count : 1});
     
-    await interaction.editReply({embeds: [message.embed], components : [message.row1, message.row2]});
+    await interaction.editReply({embeds: [message.embed], components :message.rows});
   },
 };
