@@ -29,7 +29,7 @@ module.exports = {
     let res : {id : number, msg : string}; 
 
     if(!page) {
-      res = await createTopic(topicName);
+      res = await createTopic(interaction.client.api_url, topicName);
       if(res.id == -1) {
         await interaction.editReply({embeds : [embedError(res.msg)]})
       }else {
@@ -50,7 +50,7 @@ module.exports = {
       return;
     }
 
-    const link = await getPageLink(+res.id, 1);
+    const link = await getPageLink(interaction.client.api_url, +res.id, 1);
     if(!link.startsWith("http")){
       await interaction.editReply({embeds : [embedError(link)]});
       return;

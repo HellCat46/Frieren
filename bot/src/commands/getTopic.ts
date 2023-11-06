@@ -29,7 +29,7 @@ module.exports = {
         return;
       }
           
-      const link = await getPageLink(id, 1);
+      const link = await getPageLink(interaction.client.api_url, id, 1);
       if (!link.startsWith("http")) {
             await interaction.editReply({ embeds: [embedError(link)] });
             return;

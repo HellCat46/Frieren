@@ -36,7 +36,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       return;
     }
 
-    const link = await getPageLink(key, pageno);
+    const link = await getPageLink(interaction.client.api_url, key, pageno);
     if (!link.startsWith("http")) {
       await interaction.reply({
         embeds: [embedError(link)],
@@ -92,7 +92,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       return;
     }
 
-    const link = await getPageLink(key, pageno);
+    const link = await getPageLink(interaction.client.api_url, key, pageno);
     if (!link.startsWith("http")) {
       await interaction.reply({ embeds: [embedError(link)], ephemeral: true });
       return;
@@ -123,7 +123,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
     collector.on("collect", (msg) => {
       if (msg.attachments) {
         msg.attachments.forEach(async (attachment) => {
-          const res = await addPage(key, attachment.url);
+          const res = await addPage(interaction.client.api_url,key, attachment.url);
           if (typeof res === "number") {
             count = res;
             await interaction.followUp({
@@ -173,7 +173,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
     }
 
     const pageno = inbed.footer.text.split(" ")[0];
-    const res = await removePage(key, pageno);
+    const res = await removePage(interaction.client.api_url, key, pageno);
     if (res != 0) {
       await interaction.followUp({
         embeds: [embedError(`${res}`)],
@@ -198,7 +198,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
     interaction.update({
       embeds: [
         EmbedBuilder.from(inbed)
-          .setImage(await getPageLink(key, +pageno))
+          .setImage(await getPageLink(interaction.client.api_url, key, +pageno))
           .setFooter({
             text: `${pageno} of ${topic.page_count}`,
           }),

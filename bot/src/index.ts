@@ -11,6 +11,7 @@ dotenv.config();
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
 
 client.commands = new Collection();
+client.api_url = process.env.API_URL!;
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs

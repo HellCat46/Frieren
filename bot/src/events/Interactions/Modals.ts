@@ -36,7 +36,7 @@ export async function ModalEvents(interaction: ModalSubmitInteraction) {
         return;
     }
 
-    const link = await getPageLink(+key, pageno);
+    const link = await getPageLink(interaction.client.api_url, +key, pageno);
     if (!link.startsWith("http")) {
       await interaction.reply({
         embeds: [embedError(link)],

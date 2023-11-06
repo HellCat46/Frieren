@@ -1,13 +1,14 @@
 import { Collection } from "discord.js";
 
 export async function createTopic(
+  apiurl : string,
   topicName: string,
   pageurl?: string
 ): Promise<{ id: number; msg: string }> {
   if (!pageurl) pageurl = "";
   try {
     const res = await fetch(
-      `http://27.58.124.183:3000/create?name=${topicName}&pageurl=${pageurl}`,
+      `http://${apiurl}/create?name=${topicName}&pageurl=${pageurl}`,
       { method: "POST" }
     );
     if (res.status == 200) {
@@ -24,12 +25,13 @@ export async function createTopic(
 }
 
 export async function addPage(
+  apiurl: string,
   id: number,
   pageurl: string
 ): Promise<number | string> {
   try {
     const res = await fetch(
-      `http://27.58.124.183:3000/addpage?id=${id}&pageurl=${pageurl}`,
+      `http://${apiurl}/addpage?id=${id}&pageurl=${pageurl}`,
       { method: "PATCH" }
     );
     if (res.status == 200) {
@@ -46,12 +48,13 @@ export async function addPage(
 }
 
 export async function getPageLink(
+  apiurl: string,
   topicId: number,
   pageno: number
 ): Promise<string> {
   try {
     const res = await fetch(
-      `http://27.58.124.183:3000/getpage?id=${topicId}&pageno=${pageno}`
+      `http://${apiurl}/getpage?id=${topicId}&pageno=${pageno}`
     );
     if (res.status == 200) {
       const json: { link: string } = await res.json();
@@ -67,12 +70,13 @@ export async function getPageLink(
 }
 
 export async function removePage(
+  apiurl: string,
   topicId: number,
   pageno: string
 ): Promise<number | string> {
   try {
     const res = await fetch(
-      `http://27.58.124.183:3000/removepage?id=${topicId}&pageno=${pageno}`,
+      `http://${apiurl}/removepage?id=${topicId}&pageno=${pageno}`,
       { method: "DELETE" }
     );
     if (res.status == 200) {
@@ -86,10 +90,11 @@ export async function removePage(
   }
 }
 
-export async function getTopics(): Promise<
-  Collection<number, { name: string; page_count: number }>
-> {
-  const res = await fetch(`http://27.58.124.183:3000/listtopic`);
+export async function getTopics(
+  apiurl: string
+): Promise<Collection<number, { name: string; page_count: number }>> {
+  console.log(apiurl);
+  const res = await fetch(`http://${apiurl}/listtopic`);
   let collection: Collection<number, { name: string; page_count: number }> =
     new Collection();
   if (res.status == 200) {
