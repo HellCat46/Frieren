@@ -44,7 +44,7 @@ module.exports = {
       return;
     }
 
-    res = await createTopic(topicName, page.url);
+    res = await createTopic(interaction.client.api_url, topicName, page.url);
     if(res.id == -1){
       await interaction.editReply({ embeds : [embedError(res.msg)]});
       return;
