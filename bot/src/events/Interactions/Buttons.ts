@@ -15,13 +15,15 @@ import { randomInt } from "node:crypto";
 
 export async function ButtonEvents(interaction: ButtonInteraction) {
   const id = interaction.customId;
-  const key = +id.split(".")[0];
+  const key = +id.split(".")[0]; // Parses Topic Id from customId of Button
   const topic = interaction.client.Topics.get(key);
-  if (!topic) return;
+  if (!topic) return; // If topic with the id exist or not
 
-  const inbed = interaction.message.embeds[0];
+  const inbed = interaction.message.embeds[0]; // The main embed shown to user
 
-  if (id.endsWith("back")) {
+  try {
+  switch (id.split(".")[1]) {
+    case "back": {
     if (!inbed.footer) {
       await interaction.reply({
         embeds: [embedError("No pages")],
@@ -29,6 +31,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       });
       return;
     }
+
+
     const pageno = +inbed.footer.text.split(" ")[0] - 1;
     if (0 >= pageno) {
       await interaction.reply({
@@ -37,6 +41,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       });
       return;
     }
+
 
     const link = await getPageLink(interaction.client.api_url, key, pageno);
     if (!link.startsWith("http")) {
@@ -47,16 +52,20 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       return;
     }
 
+
     const embed = new EmbedBuilder()
       .setTitle(inbed.title)
       .setImage(link)
       .setFooter({ text: `${pageno} of ${topic.page_count}` });
 
+      
     await interaction.update({
       embeds: [embed],
       components: interaction.message.components,
     });
-  } else if (id.endsWith("select")) {
+    }
+      break;
+    case "select": {
     if (!inbed.footer) {
       await interaction.reply({
         embeds: [embedError("No pages")],
@@ -77,7 +86,10 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       .setTitle("Page No.")
       .addComponents(actionrow);
     await interaction.showModal(modal);
-  } else if (id.endsWith("forward")) {
+    }
+      break;
+    case "forward": {
+
     if (!inbed.footer) {
       await interaction.reply({
         embeds: [embedError("No pages")],
@@ -109,7 +121,11 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       embeds: [embed],
       components: interaction.message.components,
     });
-  } else if (id.endsWith("add")) {
+  
+    }
+      break;
+    case "add": {
+
     if (!interaction.channel) return;
     const pin = randomInt(111111, 999999);
     let embed = new EmbedBuilder()
@@ -175,9 +191,13 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
         components: interaction.message.components,
       });
     });
-  } else if (id.endsWith("remove")) {
+  
+    }
+      break;
+    case "remove": {
     await interaction.deferReply();
-    const input = await  (await interaction.editReply({
+    const input = await(
+      await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Deletion Confirmation")
@@ -259,7 +279,13 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       ],
       components: interaction.message.components,
     });
-  } else if (id.endsWith("advance")) {
+    }
+      break;
+    case "refresh": {
+
+    }
+      break;
+    case "advance": {
     const embed = new EmbedBuilder()
       .setTitle("Advance Options")
       .setDescription("These options are only available for limited users.")
@@ -294,5 +320,10 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       components: [row],
       ephemeral: true,
     });
+    }
+      break;
+  }
+  }catch(exception) {
+    console.error(exception);
   }
 }
