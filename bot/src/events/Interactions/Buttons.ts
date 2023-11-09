@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
+  ComponentType,
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
@@ -127,7 +128,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
     let count = topic.page_count;
     collector.on("collect", async (msg) => {
       if (interaction.user.id != msg.author.id || !msg.attachments) return;
-      if(msg.content == `STOP ${pin}`) {
+      if (msg.content == `STOP ${pin}`) {
         collector.stop("Requested by user");
         msg.delete();
         return;
@@ -146,7 +147,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             ephemeral: true,
           });
           return;
-        } 
+        }
         count = res;
       }
       msg.delete();
@@ -166,9 +167,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       await interaction.message.edit({
         embeds: [
           EmbedBuilder.from(inbed)
-            .setImage(
-              await getPageLink(interaction.client.api_url, key, 1)
-            )
+            .setImage(await getPageLink(interaction.client.api_url, key, 1))
             .setFooter({
               text: `${1} of ${count}`,
             }),
@@ -177,6 +176,47 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       });
     });
   } else if (id.endsWith("remove")) {
+    await interaction.deferReply();
+    const input = await  (await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Deletion Confirmation")
+            .setDescription(
+              "Do you really want to delete the currently active page?"
+            )
+            .setFooter({ text: "Confirmation will expire after 20 seconds" }),
+        ],
+        components: [
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Yes")
+              .setCustomId("yes")
+              .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+              .setLabel("No")
+              .setCustomId("no")
+              .setStyle(ButtonStyle.Success)
+          ),
+        ],
+      })
+    )
+      .awaitMessageComponent({
+        filter: (click) => click.user.id == interaction.user.id,
+        time: 20000,
+        componentType: ComponentType.Button,
+      })
+      .then((value) => {
+        console.log(value.customId);
+        if (value.customId == "yes") return 1;
+        else return 0;
+      })
+      .catch(() => 0);
+
+    await interaction.deleteReply();
+    if (input == 0) {
+      return;
+    }
+
     if (!inbed.footer || topic.page_count == 0) {
       await interaction.followUp({
         embeds: [embedError("No pages")],
@@ -209,7 +249,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       return;
     }
 
-    interaction.update({
+    interaction.message.edit({
       embeds: [
         EmbedBuilder.from(inbed)
           .setImage(await getPageLink(interaction.client.api_url, key, +pageno))
