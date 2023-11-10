@@ -58,7 +58,7 @@ export async function getPageLink(
     );
     if (res.status == 200) {
       const json: { link: string } = await res.json();
-      return json.link;
+      return apiurl+json.link;
     } else {
       const json: { error: string } = await res.json();
       throw json.error;

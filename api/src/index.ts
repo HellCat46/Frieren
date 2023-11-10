@@ -50,7 +50,7 @@ app.get("/getpage", async (req : Request, res : Response) => {
       res.status(404).json({error : "Page doesn't exist"});
       return;
     }
-    res.json({link : `files/notes/${id}/${result.rows[0].pagePath}`})
+    res.json({link : `/files/notes/${id}/${result.rows[0].pagePath}`})
   }catch(err) {
     console.error(err);
     res.status(500).json({error : err});
