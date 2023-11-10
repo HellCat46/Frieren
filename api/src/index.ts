@@ -47,7 +47,7 @@ app.get("/getpage", async (req : Request, res : Response) => {
       `SELECT "_pagePaths"[${+pageno}] AS "pagePath" FROM topic WHERE _id = ${id};`
     );
     if(result.rows[0].pagePath == null){
-      res.status(204).json({error : "Page doesn't exist"});
+      res.status(404).json({error : "Page doesn't exist"});
       return;
     }
     res.json({link : `files/notes/${id}/${result.rows[0].pagePath}`})
@@ -121,7 +121,7 @@ app.patch("/addpage", async (req: Request, res : Response) => {
   try {
     const records = await pool.query(`SELECT "_pagePaths" FROM topic WHERE topic._id = ${id};`);
     if(records.rows.length == 0){
-      res.status(204).json({error : "Topic doesn't exist."});
+      res.status(404).json({error : "Topic doesn't exist."});
       return;
     }
 
@@ -142,50 +142,46 @@ app.patch("/addpage", async (req: Request, res : Response) => {
 });
 
 
-// app.delete("/removepage", async (req: Request, res: Response) => {
-//   const id = req.query.id;
-//   const pageno = req.query.pageno;
-//   if (typeof id !== "string" || typeof pageno !== "string") {
-//     res.status(400).json({ error: "Missing or empty required query string" });
-//     return;
-//   }
+app.delete("/removepage", async (req: Request, res: Response) => {
+  const id = req.query.id;
+  const pageno = req.query.pageno;
+  if (typeof id !== "string" || typeof pageno !== "string") {
+    res.status(400).json({ error: "Missing or empty required query string" });
+    return;
+  }
 
-//   try {
-//     const records = await pool.query(`SELECT "_pagePaths" FROM topic WHERE _id = ${id};`);
-//     if(records.rows.length == 0){
-//       res.status(204).json({error : "Topic doesn't exist."});
-//       return;
-//     }else if(records.rows[0]._pagePaths.length == 0){
-//       res.status(204).json({ error: "Zero pages for the topic." });
-//       return;
-//     }
+  try {
+    const records = await pool.query(`SELECT "_pagePaths" FROM topic WHERE _id = ${id};`);
+    if(records.rows.length == 0){
+      res.status(404).json({error : "Topic doesn't exist."});
+      return;
+    }else if(records.rows[0]._pagePaths.length == 0){
+      res.status(404).json({ error: "Zero pages for the topic." });
+      return;
+    }
 
-//     const page = records.rows[0]._pagePaths[+pageno -1];
+    const page = records.rows[0]._pagePaths[+pageno -1];
 
-//     let paths : Array<string> = [];
+    let paths : Array<string> = [];
 
-//     for(let path of records.rows[0]._pagePaths){
-//       if(path != page){
-//         paths.push(path);
-//       }
-//     }
+    for(let path of records.rows[0]._pagePaths){
+      if(path != page){
+        paths.push(path);
+      }
+    }
 
-//     unlink(`${notesfolder}/${id}/${page}`, (err) => {
-//       if(err){
-//         res.status(500).json({error : err});
-//       }
-//     })
+    unlink(`${notesfolder}/${id}/${page}`, (err) => console.log(err));
 
-//     await pool.query(
-//       `UPDATE topic SET "_pagePaths" = 
-//       )} WHERE _id = ${id};`
-//     );
-//     res.status(200);
-//   }catch(err) {
-//     console.error(err);
-//     res.status(500).json({error : err});
-//   }
-// });
+    await pool.query(
+      `UPDATE topic SET "_pagePaths" = '{${paths.toString()}}'
+       WHERE _id = ${id};`
+    );
+    res.status(200).json({message  : "Success"});
+  }catch(err) {
+    console.error(err);
+    res.status(500).json({error : err});
+  }
+});
 
 
 app.patch("/chngstatus");
