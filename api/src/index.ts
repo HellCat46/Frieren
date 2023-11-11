@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import { randomUUID } from "crypto";
-import { mkdir, mkdirSync, unlink, writeFile } from "node:fs";
-import { Pool } from "pg";
+import { mkdir, mkdirSync, createWriteStream } from "node:fs";
+import { rm, unlink } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
+import { Pool } from "pg";
 import dotenv from "dotenv";
-import { createWriteStream } from "fs";
 dotenv.config();
 
 const app: Express = express();
@@ -177,9 +177,7 @@ app.delete("/removepage", async (req: Request, res: Response) => {
       }
     }
 
-    unlink(`${notesfolder}/${id}/${page}`, (err) => {
-      if (err) console.error(err);
-    });
+    await unlink(`${notesfolder}/${id}/${page}`);
 
     await pool.query(
       `UPDATE topic SET "_pagePaths" = '{${paths.toString()}}'
@@ -229,6 +227,7 @@ app.delete("/deletetopic", async (req: Request, res: Response) => {
     return;
   }
   try {
+    await rm(`${notesfolder}/${id}`, {recursive : true});
     const result = await pool.query(`DELETE FROM topic WHERE _id = ${id};`);
     if(result.rowCount == 0){
       res.status(404).json({error : "Topic doesn't exist."});

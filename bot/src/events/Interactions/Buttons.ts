@@ -285,14 +285,14 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
           });
 
           if (topic.page_count == 0) {
-            interaction.message.edit({
+            await interaction.message.edit({
               embeds: [EmbedBuilder.from(inbed).setImage(null).setFooter(null)],
               components: [interaction.message.components[1]],
             });
             return;
           }
 
-          interaction.message.edit({
+          await interaction.message.edit({
             embeds: [
               EmbedBuilder.from(inbed)
                 .setImage(
@@ -313,7 +313,6 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
       case "refresh":
         {
           await interaction.deferReply({ ephemeral: true });
-          console.log(interaction.customId);
           if (inbed.footer && topic.page_count > 0) {
             const current_page = +inbed.footer.text.split(" ")[0];
             const link = await getPageLink(
@@ -334,7 +333,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
               `${current_page} of ${topic.page_count}`,
               link
             );
-            interaction.message.edit({
+            await interaction.message.edit({
               embeds: [msg.embed],
               components: msg.rows,
             });
@@ -357,7 +356,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
               `${1} of ${topic.page_count}`,
               link
             );
-            interaction.message.edit({
+            await interaction.message.edit({
               embeds: [msg.embed],
               components: msg.rows,
             });
@@ -406,7 +405,7 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
               .setStyle(ButtonStyle.Link)
               .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4")
           );
-          interaction.reply({
+          await interaction.reply({
             embeds: [embed],
             components: [row],
             ephemeral: true,
