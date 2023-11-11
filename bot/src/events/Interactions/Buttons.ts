@@ -226,7 +226,6 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
         componentType: ComponentType.Button,
       })
       .then((value) => {
-        console.log(value.customId);
         if (value.customId == "yes") return 1;
         else return 0;
       })

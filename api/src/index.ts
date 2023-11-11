@@ -25,7 +25,9 @@ app.get("/", async (_, res) => {
 
 app.get("/listtopic", async(req : Request, res : Response) => {
   try {
-    const records = await pool.query(`SELECT _id, _name, ARRAY_LENGTH("_pagePaths",1) FROM topic WHERE _status != '${status[2]}';`);
+    const records = await pool.query(
+      `SELECT _id, _name, ARRAY_LENGTH("_pagePaths",1) AS "page_count" FROM topic WHERE _status != '${status[2]}';`
+    );
     res.json({list : records.rows});
   }catch (err){
     console.error(err);
@@ -35,9 +37,10 @@ app.get("/listtopic", async(req : Request, res : Response) => {
 
 
 app.get("/getpage", async (req : Request, res : Response) => {
-  const id = req.query.id;
-  const pageno = req.query.pageno;
-  if(typeof id !== "string" || typeof pageno !== "string"){
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const id = url.searchParams.get("id");
+  const pageno = url.searchParams.get("pageno");
+  if(!id || !pageno ){
     res.status(400).json({error : "Missing or empty required query string"});
     return;
   }
@@ -50,7 +53,7 @@ app.get("/getpage", async (req : Request, res : Response) => {
       res.status(404).json({error : "Page doesn't exist"});
       return;
     }
-    res.json({link : `/files/notes/${id}/${result.rows[0].pagePath}`})
+    res.json({link : `http://${url.hostname}:${url.port}/files/notes/${id}/${result.rows[0].pagePath}`})
   }catch(err) {
     console.error(err);
     res.status(500).json({error : err});
@@ -59,9 +62,10 @@ app.get("/getpage", async (req : Request, res : Response) => {
 
 
 app.post("/create", async (req: Request, res: Response) => {
-  const name = req.query.name;
-  const pageurl = req.query.pageurl;
-  if (typeof name !== "string") {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const name = url.searchParams.get("name");
+  const pageurl = url.searchParams.get("pageurl");
+  if (!name) {
     res.status(400).json({ error: "Missing or empty required query string" });
     return;
   }
@@ -90,7 +94,7 @@ app.post("/create", async (req: Request, res: Response) => {
         throw err;
       }
     });
-    if (typeof pageurl !== "string") {
+    if (!pageurl) {
       res.json({ id });
       return;
     }
@@ -111,9 +115,10 @@ app.post("/create", async (req: Request, res: Response) => {
 
 
 app.patch("/addpage", async (req: Request, res : Response) => {
-  const id = req.query.id;
-  const pageurl = req.query.pageurl;
-  if(typeof id !== "string" || typeof pageurl !== "string"){
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const id = url.searchParams.get("id");
+  const pageurl = url.searchParams.get("pageurl");
+  if(!id|| !pageurl){
     res.status(400).json({ error: "Missing or empty required query string" });
     return;
   }
@@ -136,16 +141,17 @@ app.patch("/addpage", async (req: Request, res : Response) => {
     );
     res.json({page_count : updates.rows[0].array_length});
   }catch(err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({error : err});
   }
 });
 
 
 app.delete("/removepage", async (req: Request, res: Response) => {
-  const id = req.query.id;
-  const pageno = req.query.pageno;
-  if (typeof id !== "string" || typeof pageno !== "string") {
+  const url = new URL(req.url, `http://${req.headers.host}`);;
+  const id = url.searchParams.get("id");
+  const pageno = url.searchParams.get("pageno");
+  if (!id || !pageno) {
     res.status(400).json({ error: "Missing or empty required query string" });
     return;
   }
@@ -170,7 +176,9 @@ app.delete("/removepage", async (req: Request, res: Response) => {
       }
     }
 
-    unlink(`${notesfolder}/${id}/${page}`, (err) => console.log(err));
+    unlink(`${notesfolder}/${id}/${page}`, (err) => {
+      if(err) console.error(err)
+    });
 
     await pool.query(
       `UPDATE topic SET "_pagePaths" = '{${paths.toString()}}'

@@ -58,7 +58,7 @@ export async function getPageLink(
     );
     if (res.status == 200) {
       const json: { link: string } = await res.json();
-      return apiurl+json.link;
+      return json.link;
     } else {
       const json: { error: string } = await res.json();
       throw json.error;
@@ -97,11 +97,12 @@ export async function getTopics(
   let collection: Collection<number, { name: string; page_count: number }> =
     new Collection();
   if (res.status == 200) {
-    const json: { list: { id: number; name: string; page_count: number }[] } =
+    const json: { list: { _id: number; _name: string; page_count : number }[] } =
       await res.json();
     json.list.forEach((topic) => {
-      collection.set(topic.id, {
-        name: topic.name,
+      if(topic.page_count == null) topic.page_count = 0;
+      collection.set(topic._id, {
+        name: topic._name,
         page_count: topic.page_count,
       });
     });

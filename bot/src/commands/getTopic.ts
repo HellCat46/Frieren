@@ -48,7 +48,7 @@ module.exports = {
       )
       .setFooter({ text: "The Menu will disappear after 2 minutes" });
 
-    (
+    await (
       await interaction.editReply({
         embeds: [embed],
         components: [
