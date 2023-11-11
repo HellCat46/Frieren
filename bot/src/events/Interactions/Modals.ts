@@ -14,7 +14,7 @@ export async function ModalEvents(interaction: ModalSubmitInteraction) {
     const inbed = interaction.message.embeds[0];
     if (!inbed.footer) {
       await interaction.reply({
-        embeds: [embedError("No ~~bitches~~ pages")],
+        embeds: [embedError("No pages")],
         ephemeral: true,
       });
       return;

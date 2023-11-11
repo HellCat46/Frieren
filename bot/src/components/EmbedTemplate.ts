@@ -4,8 +4,8 @@ export function embedError(message : string){
     return new EmbedBuilder().setDescription(message).setColor("#FF9494");
 }
 
-export function embedTopic(id: number, title : string, footer ?: string, imageurl ?: string){
-    let embed = new EmbedBuilder().setTitle(`${id}. ${title}`);
+export function embedTopic(id: number, topicName : string, footer ?: string, imageurl ?: string){
+    let embed = new EmbedBuilder().setTitle(`${id}. ${topicName}`);
 
     if(footer) embed.setFooter({text : footer});
     if(imageurl) embed.setImage(imageurl);
