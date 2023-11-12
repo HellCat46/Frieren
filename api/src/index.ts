@@ -25,9 +25,14 @@ app.get("/", async (_, res) => {
 app.get("/listtopic", async (req: Request, res: Response) => {
   try {
     const records = await pool.query(
-      `SELECT _id, _name, ARRAY_LENGTH("_pagePaths",1) AS "page_count" FROM topic WHERE _status != '${status[2]}';`
+      `SELECT _id, _name, _status, "_archivePath" as archive_path, ARRAY_LENGTH("_pagePaths",1) AS page_count FROM topic;`
     );
-    res.json({ list: records.rows });
+    res.json({
+      list: records.rows.map((item) => {
+        item._status = status.indexOf(item._status);
+        return item;
+      }),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
@@ -190,7 +195,7 @@ app.delete("/removepage", async (req: Request, res: Response) => {
   }
 });
 
-app.patch("/chngstatus", async (req: Request, res: Response) => {
+app.patch("/changestatus", async (req: Request, res: Response) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const id = url.searchParams.get("id");
   const statuscode = url.searchParams.get("status");
@@ -212,7 +217,7 @@ app.patch("/chngstatus", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Topic doesn't exist." });
       return;
     }
-    res.status(200).json("OK");
+    res.status(200).json({ message: "OK" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
@@ -227,16 +232,16 @@ app.delete("/deletetopic", async (req: Request, res: Response) => {
     return;
   }
   try {
-    await rm(`${notesfolder}/${id}`, {recursive : true});
+    await rm(`${notesfolder}/${id}`, { recursive: true });
     const result = await pool.query(`DELETE FROM topic WHERE _id = ${id};`);
-    if(result.rowCount == 0){
-      res.status(404).json({error : "Topic doesn't exist."});
+    if (result.rowCount == 0) {
+      res.status(404).json({ error: "Topic doesn't exist." });
       return;
     }
-    res.status(200).json({message : "Topic Deleted"})
+    res.status(200).json({ message: "Topic Deleted" });
   } catch (err) {
     console.error(err);
-    res.status(200).json({error : err});
+    res.status(200).json({ error: err });
   }
 });
 

@@ -1,7 +1,8 @@
 import { Collection } from "discord.js";
+import { topicStatus } from "../index";
 
 export async function createTopic(
-  apiurl : string,
+  apiurl: string,
   topicName: string,
   pageurl?: string
 ): Promise<{ id: number; msg: string }> {
@@ -92,22 +93,78 @@ export async function removePage(
 
 export async function getTopics(
   apiurl: string
-): Promise<Collection<number, { name: string; page_count: number }>> {
+): Promise<Collection<number, { name: string; page_count: number; status : topicStatus; archive_link : string | null }>> {
   const res = await fetch(`http://${apiurl}/listtopic`);
-  let collection: Collection<number, { name: string; page_count: number }> =
-    new Collection();
+  let collection: Collection<
+    number,
+    {
+      name: string;
+      page_count: number;
+      status: topicStatus;
+      archive_link: string | null;
+    }
+  > = new Collection();
   if (res.status == 200) {
-    const json: { list: { _id: number; _name: string; page_count : number }[] } =
-      await res.json();
+    const json: {
+      list: {
+        _id: number;
+        _name: string;
+        _status: topicStatus;
+        archive_link: string | null;
+        page_count: number;
+      }[];
+    } = await res.json();
+    
     json.list.forEach((topic) => {
-      if(topic.page_count == null) topic.page_count = 0;
+      if (topic.page_count == null) topic.page_count = 0;
       collection.set(topic._id, {
         name: topic._name,
         page_count: topic.page_count,
+        status : topic._status,
+        archive_link : topic.archive_link
       });
     });
     return collection;
   } else {
     return new Collection();
+  }
+}
+
+export async function deleteTopic(
+  apiurl: string,
+  topicId: number
+): Promise<boolean> {
+  try {
+    const res = await fetch(`http://${apiurl}/deletetopic?id=${topicId}`, {method : "DELETE"});
+    if (res.status == 200) {
+      return true;
+    } else {
+      const json: { error: string } = await res.json();
+      throw json;
+    }
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+
+export async function changeStatus(
+  apiurl : string,
+  topicId: number,
+  status: topicStatus
+): Promise<boolean> {
+  try {
+    const res = await fetch(`http://${apiurl}/changeStatus?id=${topicId}&status=${status}`, {method : "PATCH"});
+    console.log(res.status, res.body);
+    if (res.status == 200) {
+      return true;
+    }else {
+      const json : {error : string} = await res.json();
+      throw json.error;
+    }
+  }catch(err) {
+    console.error(err);
+    return false;
   }
 }

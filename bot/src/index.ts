@@ -8,6 +8,13 @@ import {
 import dotenv from "dotenv";
 dotenv.config();
 
+export enum topicStatus {
+  Open,
+  Closed,
+  Archived,
+}
+
+
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
 
 client.commands = new Collection();
