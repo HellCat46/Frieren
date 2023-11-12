@@ -10,14 +10,27 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { addPage, getPageLink, removePage } from "../../components/Requests";
+import {
+  addPage,
+  changeStatus,
+  deleteTopic,
+  getPageLink,
+  removePage,
+} from "../../components/Requests";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { randomInt } from "node:crypto";
+import { topicStatus } from "../../index";
 
 interface Params {
   interaction: ButtonInteraction;
   embed: Embed;
-  topic: { id: number; name: string; page_count: number };
+  topic: {
+    id: number;
+    name: string;
+    page_count: number;
+    status: topicStatus;
+    archive_link: string | null;
+  };
 }
 
 export async function ButtonEvents(interaction: ButtonInteraction) {
@@ -37,6 +50,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -48,6 +63,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -59,6 +76,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -70,6 +89,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -81,6 +102,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -92,6 +115,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -103,6 +128,8 @@ export async function ButtonEvents(interaction: ButtonInteraction) {
             id: topicId,
             name: topic.name,
             page_count: topic.page_count,
+            status: topic.status,
+            archive_link: topic.archive_link,
           },
         });
         break;
@@ -219,7 +246,13 @@ async function optionForward(params: Params) {
 }
 
 async function optionAdd(params: Params) {
+  if(params.topic.status != topicStatus.Open){
+    await params.interaction.reply({embeds : [embedError("Pages can't be added into a Closed Topic")], ephemeral : true});
+    return;
+  }
   if (!params.interaction.channel) return;
+
+
   const pin = randomInt(111111, 999999);
   let embed = new EmbedBuilder()
     .setTitle("Image Collector")
@@ -271,6 +304,8 @@ async function optionAdd(params: Params) {
     params.interaction.client.Topics.set(params.topic.id, {
       name: params.topic.name,
       page_count: count,
+      status: params.topic.status,
+      archive_link: params.topic.archive_link,
     });
 
     await params.interaction.message.edit({
@@ -293,6 +328,13 @@ async function optionAdd(params: Params) {
 }
 
 async function optionRemove(params: Params) {
+  if (params.topic.status != topicStatus.Open) {
+    await params.interaction.reply({
+      embeds: [embedError("Pages can't be removed from a Closed Topic")],
+      ephemeral: true,
+    });
+    return;
+  }
   await params.interaction.deferReply();
 
   if (!params.embed.footer || params.topic.page_count == 0) {
@@ -363,6 +405,8 @@ async function optionRemove(params: Params) {
   params.interaction.client.Topics.set(params.topic.id, {
     name: params.topic.name,
     page_count: params.topic.page_count,
+    status: params.topic.status,
+    archive_link: params.topic.archive_link,
   });
 
   if (params.topic.page_count == 0) {
@@ -453,41 +497,163 @@ async function optionRefresh(params: Params) {
 }
 
 async function optionAdvance(params: Params) {
-  const embed = new EmbedBuilder()
-    .setTitle("Advance Options")
-    .setDescription("These options are only available for limited users.")
-    .setThumbnail(
-      "https://cdn.discordapp.com/attachments/1067033740154519612/1171085332565995630/memed-io-output.jpeg"
-    );
-
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setLabel("Open")
-      .setCustomId(`open`)
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setLabel("Close")
-      .setCustomId(`close`)
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setLabel("Delete")
-      .setCustomId(`delete`)
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setLabel("Archive")
-      .setCustomId(`archive`)
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setLabel("PDF Link")
-      .setStyle(ButtonStyle.Link)
-      .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4")
-  );
-  (
-    await params.interaction.reply({
-      embeds: [embed],
-      components: [row],
-      ephemeral: true,
+  await params.interaction.deferReply();
+  const click = await (
+    await params.interaction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Advance Options")
+          .setDescription("These options are only available for limited users.")
+          .setThumbnail(
+            "https://cdn.discordapp.com/attachments/1067033740154519612/1171085332565995630/memed-io-output.jpeg"
+          ),
+      ],
+      components: [
+        new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder()
+            .setLabel("Open")
+            .setCustomId("open")
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setLabel("Close")
+            .setCustomId("close")
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setLabel("Delete")
+            .setCustomId("delete")
+            .setStyle(ButtonStyle.Danger),
+          new ButtonBuilder()
+            .setLabel("Archive")
+            .setCustomId("archive")
+            .setStyle(ButtonStyle.Danger),
+          new ButtonBuilder()
+            .setLabel("PDF Link")
+            .setStyle(ButtonStyle.Link)
+            .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4")
+        ),
+      ],
     })
   )
-   
+    .awaitMessageComponent({
+      filter: (click) => click.user.id == params.interaction.user.id,
+      time: 20000,
+      componentType: ComponentType.Button,
+    })
+    .then((value) => value)
+    .catch(() => null);
+
+  await params.interaction.deleteReply();
+  if (click == null) return;
+
+  console.log(
+    `${params.topic.status} == ${topicStatus.Archived} = ${
+      params.topic.status == topicStatus.Archived
+    }`
+  );
+  if (params.topic.status == topicStatus.Archived) {
+    await click.reply({
+      content: "Topic is archived therefore these options are not accessible.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  await click.deferReply({ ephemeral: true });
+  switch (click.customId) {
+    case "open":
+      {
+        console.log(`${params.topic.status} == ${topicStatus.Open} = ${params.topic.status == topicStatus.Open}`)
+        if (params.topic.status == topicStatus.Open) {
+          await click.editReply({
+            embeds: [embedError("Topic is already opened")],
+          });
+          return;
+        }
+
+        const result = await changeStatus(
+          click.client.api_url,
+          params.topic.id,
+          topicStatus.Open
+        );
+        if (!result) {
+          await click.editReply({
+            embeds: [embedError("Failed to Open the topic")],
+          });
+          return;
+        }
+        click.client.Topics.set(params.topic.id, {
+          name: params.topic.name,
+          page_count: params.topic.page_count,
+          status: topicStatus.Open,
+          archive_link: params.topic.archive_link,
+        });
+        click.editReply("Successfully opened the Topic.");
+      }
+      break;
+    case "close":
+      {
+        if (params.topic.status == topicStatus.Closed) {
+          await click.editReply({
+            embeds: [embedError("Topic is already closed")],
+          });
+          return;
+        }
+
+        const result = await changeStatus(
+          click.client.api_url,
+          params.topic.id,
+          topicStatus.Closed
+        );
+        if (!result) {
+          await click.editReply({
+            embeds: [embedError("Failed to Close the topic")],
+          });
+          return;
+        }
+        click.client.Topics.set(params.topic.id, {
+          name: params.topic.name,
+          page_count: params.topic.page_count,
+          status: topicStatus.Closed,
+          archive_link: params.topic.archive_link,
+        });
+        click.editReply("Successfully Closed the Topic.");
+      }
+      break;
+    case "archive":
+      {
+        const result = await changeStatus(
+          click.client.api_url,
+          params.topic.id,
+          topicStatus.Archived
+        );
+        if (!result) {
+          await click.editReply({
+            embeds: [embedError("Failed to Archive the topic")],
+          });
+          return;
+        }
+        click.client.Topics.set(params.topic.id, {
+          name: params.topic.name,
+          page_count: params.topic.page_count,
+          status: topicStatus.Archived,
+          archive_link: params.topic.archive_link, // Replace it with the link
+        });
+        click.editReply("Successfully Archive the Topic.");
+      }
+      break;
+    case "delete":
+      {
+        const result = await deleteTopic(click.client.api_url, params.topic.id);
+        if (!result) {
+          await click.editReply({
+            embeds: [embedError("Failed to Delete the topic")],
+          });
+          return;
+        }
+        click.client.Topics.delete(params.topic.id);
+        click.editReply("Successfully Deleted the Topic.");
+        params.interaction.message.delete();
+      }
+      break;
+  }
 }
