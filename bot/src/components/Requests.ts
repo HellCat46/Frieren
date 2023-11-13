@@ -50,6 +50,7 @@ export async function addPage(
 
 export async function getPageLink(
   apiurl: string,
+  file_router : string,
   topicId: number,
   pageno: number
 ): Promise<string> {
@@ -58,8 +59,8 @@ export async function getPageLink(
       `http://${apiurl}/getpage?id=${topicId}&pageno=${pageno}`
     );
     if (res.status == 200) {
-      const json: { link: string } = await res.json();
-      return json.link;
+      const json: { path: string } = await res.json();
+      return "http://"+file_router+json.path;
     } else {
       const json: { error: string } = await res.json();
       throw json.error;

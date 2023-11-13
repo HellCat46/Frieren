@@ -8,12 +8,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app: Express = express();
+const file_router = express();
 
 const pool = new Pool();
 const status = ["Open", "Closed", "Archived"];
 
 const notesfolder = "files/notes";
 const archivefolder = "files/archive";
+const accepted_types = ["image/png", "image/jpg", "image/jpeg"];
 
 mkdirSync(notesfolder, { recursive: true });
 mkdirSync(archivefolder, { recursive: true });
@@ -35,7 +37,9 @@ app.get("/listtopic", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -56,12 +60,16 @@ app.get("/getpage", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Page doesn't exist" });
       return;
     }
+
+    
     res.json({
-      link: `http://${url.hostname}:${url.port}/files/notes/${id}/${result.rows[0].pagePath}`,
+      path: `/files/notes/${id}/${result.rows[0].pagePath}`,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -104,16 +112,20 @@ app.post("/create", async (req: Request, res: Response) => {
     }
 
     const result = await saveFile(id, [], pageurl);
-    if (result == null) {
-      res.status(500).json({ error: "Error while saving the file" });
-      return;
-    }
+    if (result instanceof Error) throw result;
+
     await pool.query(
       `UPDATE public.topic SET "_pagePaths" = array_append(topic."_pagePaths", '${result}') WHERE topic._id = ${id};`
     );
     res.json({ id });
   } catch (err) {
-    res.status(500).json({ error: err });
+    if(err instanceof Error){
+      res.status(500).json({error : err.message});
+      return;
+    }
+
+    console.error(err);
+    res.status(500).json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -136,18 +148,22 @@ app.patch("/addpage", async (req: Request, res: Response) => {
     }
 
     const result = await saveFile(+id, records.rows[0]._pagePaths, pageurl);
-    if (result == null) {
-      res.status(500).json({ error: "Error while saving the file" });
-      return;
-    }
+    if (result instanceof Error) throw result;
 
     const updates = await pool.query(
       `UPDATE public.topic SET "_pagePaths" = array_append(topic."_pagePaths", '${result}') WHERE topic._id = ${id} RETURNING ARRAY_LENGTH(topic."_pagePaths", 1);`
     );
     res.json({ page_count: updates.rows[0].array_length });
   } catch (err) {
+    if(err instanceof Error) {
+      res.status(500).json({error : err.message});
+      return;
+    }
+
     console.error(err);
-    res.status(500).json({ error: err });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -191,7 +207,9 @@ app.delete("/removepage", async (req: Request, res: Response) => {
     res.status(200).json({ message: "Success" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -220,7 +238,9 @@ app.patch("/changestatus", async (req: Request, res: Response) => {
     res.status(200).json({ message: "OK" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -241,19 +261,24 @@ app.delete("/deletetopic", async (req: Request, res: Response) => {
     res.status(200).json({ message: "Topic Deleted" });
   } catch (err) {
     console.error(err);
-    res.status(200).json({ error: err });
+    res
+      .status(200)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
-app.use("/files", express.static("files"));
+file_router.use("/files", express.static("files"));
 
-app.listen(3000, "0.0.0.0", () => {
-  console.log("Listening on http://0.0.0.0:3000");
+app.listen(3000, () => {
+  console.log("API is running on http://localhost:3000");
 });
+file_router.listen(3001, "0.0.0.0", () => {
+  console.log("File Router is running on http://0.0.0.0:3001");
+})
 
-async function saveFile(TopicId: number, filelist: string[], downurl: string) {
+async function saveFile(TopicId: number, filelist: string[], downurl: string) : Promise<string | Error> {
   // Looks for Unique name for file
-  const filename = randomUUID() + ".png";
+  const filename = randomUUID();
   filelist.forEach((file) => {
     if (file == filename) {
       return saveFile(TopicId, filelist, downurl);
@@ -264,16 +289,18 @@ async function saveFile(TopicId: number, filelist: string[], downurl: string) {
     const res = await fetch(downurl);
     const contenttype = res.headers.get("content-type");
 
-    if (!contenttype) return null;
-    if (!contenttype.startsWith("image")) return null;
-    createWriteStream(`${notesfolder}/${TopicId}/${filename}`).write(
+    if (!contenttype) return new Error(`Unable to get file type.`);
+    if (!accepted_types.includes(contenttype)) return Error("Only PNG and JPG/JPEG type Images are allowed.");
+    createWriteStream(`${notesfolder}/${TopicId}/${filename}.${contenttype.split("/")[1]}`).write(
       new Uint8Array(await res.arrayBuffer())
     );
-    return filename;
+    return `${filename}.${contenttype.split("/")[1]}`;
   } catch (err) {
     console.error(err);
-    return null;
+    return new Error("Unexpected error while saving the file");
   }
 }
 
-async function archTopic(id: number) {}
+async function createArchive(id: number) {
+  
+}

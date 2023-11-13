@@ -159,6 +159,7 @@ async function optionBack(params: Params) {
 
   const link = await getPageLink(
     params.interaction.client.api_url,
+    params.interaction.client.file_router,
     params.topic.id,
     pageno
   );
@@ -223,6 +224,7 @@ async function optionForward(params: Params) {
 
   const link = await getPageLink(
     params.interaction.client.api_url,
+    params.interaction.client.file_router,
     params.topic.id,
     pageno
   );
@@ -246,12 +248,14 @@ async function optionForward(params: Params) {
 }
 
 async function optionAdd(params: Params) {
-  if(params.topic.status != topicStatus.Open){
-    await params.interaction.reply({embeds : [embedError("Pages can't be added into a Closed Topic")], ephemeral : true});
+  if (params.topic.status != topicStatus.Open) {
+    await params.interaction.reply({
+      embeds: [embedError("Pages can't be added into a Closed Topic")],
+      ephemeral: true,
+    });
     return;
   }
   if (!params.interaction.channel) return;
-
 
   const pin = randomInt(111111, 999999);
   let embed = new EmbedBuilder()
@@ -314,6 +318,7 @@ async function optionAdd(params: Params) {
           .setImage(
             await getPageLink(
               params.interaction.client.api_url,
+              params.interaction.client.file_router,
               params.topic.id,
               1
             )
@@ -423,6 +428,7 @@ async function optionRemove(params: Params) {
         .setImage(
           await getPageLink(
             params.interaction.client.api_url,
+            params.interaction.client.file_router,
             params.topic.id,
             +pageno
           )
@@ -441,6 +447,7 @@ async function optionRefresh(params: Params) {
     const current_page = +params.embed.footer.text.split(" ")[0];
     const link = await getPageLink(
       params.interaction.client.api_url,
+      params.interaction.client.file_router,
       params.topic.id,
       current_page
     );
@@ -464,6 +471,7 @@ async function optionRefresh(params: Params) {
   } else if (params.topic.page_count > 0) {
     const link = await getPageLink(
       params.interaction.client.api_url,
+      params.interaction.client.file_router,
       params.topic.id,
       1
     );
@@ -562,7 +570,11 @@ async function optionAdvance(params: Params) {
   switch (click.customId) {
     case "open":
       {
-        console.log(`${params.topic.status} == ${topicStatus.Open} = ${params.topic.status == topicStatus.Open}`)
+        console.log(
+          `${params.topic.status} == ${topicStatus.Open} = ${
+            params.topic.status == topicStatus.Open
+          }`
+        );
         if (params.topic.status == topicStatus.Open) {
           await click.editReply({
             embeds: [embedError("Topic is already opened")],

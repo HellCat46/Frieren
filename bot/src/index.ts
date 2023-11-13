@@ -19,6 +19,7 @@ const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitFi
 
 client.commands = new Collection();
 client.api_url = process.env.API_URL!;
+client.file_router = process.env.FILE_ROUTER!;
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs

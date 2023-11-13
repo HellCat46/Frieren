@@ -93,7 +93,7 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
 
-  const link = await getPageLink(interaction.client.api_url, id, 1);
+  const link = await getPageLink(interaction.client.api_url, interaction.client.file_router, id, 1);
   if (!link.startsWith("http")) {
     await interaction.editReply({ embeds: [embedError(link)] });
     return;
