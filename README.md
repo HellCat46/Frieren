@@ -3,7 +3,7 @@
 - [X] Option to Open and Close a topic
 - [X] Option to Delete topic and anything associated with it
 - [X] Option to Mark a topic as archived
-- [ ] Get a pdf made of topic's images when marked as archived
+- [X] Get a pdf made of topic's images when marked as archived
 - [X] Option to select a topic from a list (maybe combine it with getTopic?)
 
 # Bugs and other Issues

@@ -250,7 +250,9 @@ async function optionForward(params: Params) {
 async function optionAdd(params: Params) {
   if (params.topic.status != topicStatus.Open) {
     await params.interaction.reply({
-      embeds: [embedError("Pages can't be added into a Closed Topic")],
+      embeds: [
+        embedError("Pages can't be added into a Closed or Archived Topic"),
+      ],
       ephemeral: true,
     });
     return;
@@ -335,7 +337,9 @@ async function optionAdd(params: Params) {
 async function optionRemove(params: Params) {
   if (params.topic.status != topicStatus.Open) {
     await params.interaction.reply({
-      embeds: [embedError("Pages can't be removed from a Closed Topic")],
+      embeds: [
+        embedError("Pages can't be removed from a Closed or Archived Topic"),
+      ],
       ephemeral: true,
     });
     return;
@@ -505,7 +509,17 @@ async function optionRefresh(params: Params) {
 }
 
 async function optionAdvance(params: Params) {
-  await params.interaction.deferReply();
+  await params.interaction.deferReply({ ephemeral: true });
+  let link_button = new ButtonBuilder()
+    .setLabel("PDF Link")
+    .setStyle(ButtonStyle.Link)
+    .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4");
+  if (params.topic.archive_link != null) {
+    link_button.setURL(params.topic.archive_link);
+  } else {
+    link_button.setDisabled(true);
+  }
+
   const click = await (
     await params.interaction.editReply({
       embeds: [
@@ -534,10 +548,7 @@ async function optionAdvance(params: Params) {
             .setLabel("Archive")
             .setCustomId("archive")
             .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setLabel("PDF Link")
-            .setStyle(ButtonStyle.Link)
-            .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4")
+          link_button
         ),
       ],
     })
@@ -553,11 +564,7 @@ async function optionAdvance(params: Params) {
   await params.interaction.deleteReply();
   if (click == null) return;
 
-  console.log(
-    `${params.topic.status} == ${topicStatus.Archived} = ${
-      params.topic.status == topicStatus.Archived
-    }`
-  );
+  
   if (params.topic.status == topicStatus.Archived) {
     await click.reply({
       content: "Topic is archived therefore these options are not accessible.",
@@ -570,11 +577,6 @@ async function optionAdvance(params: Params) {
   switch (click.customId) {
     case "open":
       {
-        console.log(
-          `${params.topic.status} == ${topicStatus.Open} = ${
-            params.topic.status == topicStatus.Open
-          }`
-        );
         if (params.topic.status == topicStatus.Open) {
           await click.editReply({
             embeds: [embedError("Topic is already opened")],
@@ -638,7 +640,7 @@ async function optionAdvance(params: Params) {
           params.topic.id,
           topicStatus.Archived
         );
-        if (!result) {
+        if (typeof result !== "string") {
           await click.editReply({
             embeds: [embedError("Failed to Archive the topic")],
           });
@@ -648,9 +650,13 @@ async function optionAdvance(params: Params) {
           name: params.topic.name,
           page_count: params.topic.page_count,
           status: topicStatus.Archived,
-          archive_link: params.topic.archive_link, // Replace it with the link
+          archive_link: params.interaction.client.file_router + result,
         });
-        click.editReply("Successfully Archive the Topic.");
+        click.editReply(
+          `Successfully Archive the Topic. PDF Link : ${
+            params.interaction.client.file_router + result
+          }`
+        );
       }
       break;
     case "delete":

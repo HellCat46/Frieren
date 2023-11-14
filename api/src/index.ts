@@ -5,6 +5,7 @@ import { rm, unlink } from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
 import { Pool } from "pg";
 import dotenv from "dotenv";
+import { readFile, readdir } from "fs/promises";
 dotenv.config();
 
 const app: Express = express();
@@ -61,7 +62,6 @@ app.get("/getpage", async (req: Request, res: Response) => {
       return;
     }
 
-    
     res.json({
       path: `/files/notes/${id}/${result.rows[0].pagePath}`,
     });
@@ -119,13 +119,15 @@ app.post("/create", async (req: Request, res: Response) => {
     );
     res.json({ id });
   } catch (err) {
-    if(err instanceof Error){
-      res.status(500).json({error : err.message});
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
       return;
     }
 
     console.error(err);
-    res.status(500).json({ error: "Unexpected error while processing the request" });
+    res
+      .status(500)
+      .json({ error: "Unexpected error while processing the request" });
   }
 });
 
@@ -155,8 +157,8 @@ app.patch("/addpage", async (req: Request, res: Response) => {
     );
     res.json({ page_count: updates.rows[0].array_length });
   } catch (err) {
-    if(err instanceof Error) {
-      res.status(500).json({error : err.message});
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
       return;
     }
 
@@ -228,6 +230,23 @@ app.patch("/changestatus", async (req: Request, res: Response) => {
       return;
     }
 
+    if (+statuscode == 2) {
+      const path = await createArchive(+id);
+      if (path instanceof Error) throw res;
+
+      const result = await pool.query(
+        `UPDATE topic SET _status = '${
+          status[+statuscode]
+        }', "_archivePath" = '${path}' WHERE _id = ${id};`
+      );
+      if (result.rowCount == 0) {
+        res.status(404).json({ error: "Topic doesn't exist." });
+        return;
+      }
+      res.status(200).json({ path });
+      return;
+    }
+
     const result = await pool.query(
       `UPDATE topic SET _status = '${status[+statuscode]}' WHERE _id = ${id};`
     );
@@ -274,9 +293,13 @@ app.listen(3000, () => {
 });
 file_router.listen(3001, "0.0.0.0", () => {
   console.log("File Router is running on http://0.0.0.0:3001");
-})
+});
 
-async function saveFile(TopicId: number, filelist: string[], downurl: string) : Promise<string | Error> {
+async function saveFile(
+  TopicId: number,
+  filelist: string[],
+  downurl: string
+): Promise<string | Error> {
   // Looks for Unique name for file
   const filename = randomUUID();
   filelist.forEach((file) => {
@@ -290,10 +313,11 @@ async function saveFile(TopicId: number, filelist: string[], downurl: string) : 
     const contenttype = res.headers.get("content-type");
 
     if (!contenttype) return new Error(`Unable to get file type.`);
-    if (!accepted_types.includes(contenttype)) return Error("Only PNG and JPG/JPEG type Images are allowed.");
-    createWriteStream(`${notesfolder}/${TopicId}/${filename}.${contenttype.split("/")[1]}`).write(
-      new Uint8Array(await res.arrayBuffer())
-    );
+    if (!accepted_types.includes(contenttype))
+      return Error("Only PNG and JPG/JPEG type Images are allowed.");
+    createWriteStream(
+      `${notesfolder}/${TopicId}/${filename}.${contenttype.split("/")[1]}`
+    ).write(new Uint8Array(await res.arrayBuffer()));
     return `${filename}.${contenttype.split("/")[1]}`;
   } catch (err) {
     console.error(err);
@@ -301,6 +325,28 @@ async function saveFile(TopicId: number, filelist: string[], downurl: string) : 
   }
 }
 
-async function createArchive(id: number) {
-  
+async function createArchive(id: number): Promise<string | Error> {
+  try {
+    const pdf = await PDFDocument.create();
+    const images = await readdir(`${notesfolder}/${id}`);
+    for (let image of images) {
+      const bytes = await readFile(`${notesfolder}/${id}/${image}`);
+
+      const pdfImage = image.endsWith("png")
+        ? await pdf.embedPng(bytes)
+        : await pdf.embedJpg(bytes);
+
+      const page = pdf.addPage([pdfImage.width, pdfImage.height]);
+      page.drawImage(pdfImage, {
+        width: pdfImage.width,
+        height: pdfImage.height,
+      });
+      continue;
+    }
+    createWriteStream(`${archivefolder}/${id}.pdf`).write(await pdf.save());
+    return `/${archivefolder}/${id}.pdf`;
+  } catch (err) {
+    console.error(err);
+    return new Error("Unexpected error while creating PDF from images.");
+  }
 }

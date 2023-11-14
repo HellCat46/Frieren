@@ -9,7 +9,7 @@ export async function createTopic(
   if (!pageurl) pageurl = "";
   try {
     const res = await fetch(
-      `http://${apiurl}/create?name=${topicName}&pageurl=${pageurl}`,
+      `${apiurl}/create?name=${topicName}&pageurl=${pageurl}`,
       { method: "POST" }
     );
     if (res.status == 200) {
@@ -32,7 +32,7 @@ export async function addPage(
 ): Promise<number | string> {
   try {
     const res = await fetch(
-      `http://${apiurl}/addpage?id=${id}&pageurl=${pageurl}`,
+      `${apiurl}/addpage?id=${id}&pageurl=${pageurl}`,
       { method: "PATCH" }
     );
     if (res.status == 200) {
@@ -56,11 +56,11 @@ export async function getPageLink(
 ): Promise<string> {
   try {
     const res = await fetch(
-      `http://${apiurl}/getpage?id=${topicId}&pageno=${pageno}`
+      `${apiurl}/getpage?id=${topicId}&pageno=${pageno}`
     );
     if (res.status == 200) {
       const json: { path: string } = await res.json();
-      return "http://"+file_router+json.path;
+      return file_router+json.path;
     } else {
       const json: { error: string } = await res.json();
       throw json.error;
@@ -78,7 +78,7 @@ export async function removePage(
 ): Promise<number | string> {
   try {
     const res = await fetch(
-      `http://${apiurl}/removepage?id=${topicId}&pageno=${pageno}`,
+      `${apiurl}/removepage?id=${topicId}&pageno=${pageno}`,
       { method: "DELETE" }
     );
     if (res.status == 200) {
@@ -93,9 +93,10 @@ export async function removePage(
 }
 
 export async function getTopics(
-  apiurl: string
+  apiurl: string,
+  file_router : string
 ): Promise<Collection<number, { name: string; page_count: number; status : topicStatus; archive_link : string | null }>> {
-  const res = await fetch(`http://${apiurl}/listtopic`);
+  const res = await fetch(`${apiurl}/listtopic`);
   let collection: Collection<
     number,
     {
@@ -111,18 +112,17 @@ export async function getTopics(
         _id: number;
         _name: string;
         _status: topicStatus;
-        archive_link: string | null;
+        archive_path: string | null;
         page_count: number;
       }[];
     } = await res.json();
-    
     json.list.forEach((topic) => {
       if (topic.page_count == null) topic.page_count = 0;
       collection.set(topic._id, {
         name: topic._name,
         page_count: topic.page_count,
         status : topic._status,
-        archive_link : topic.archive_link
+        archive_link : topic.archive_path? file_router + topic.archive_path : null
       });
     });
     return collection;
@@ -136,7 +136,7 @@ export async function deleteTopic(
   topicId: number
 ): Promise<boolean> {
   try {
-    const res = await fetch(`http://${apiurl}/deletetopic?id=${topicId}`, {method : "DELETE"});
+    const res = await fetch(`${apiurl}/deletetopic?id=${topicId}`, {method : "DELETE"});
     if (res.status == 200) {
       return true;
     } else {
@@ -154,11 +154,14 @@ export async function changeStatus(
   apiurl : string,
   topicId: number,
   status: topicStatus
-): Promise<boolean> {
+): Promise<boolean | string> {
   try {
-    const res = await fetch(`http://${apiurl}/changeStatus?id=${topicId}&status=${status}`, {method : "PATCH"});
-    console.log(res.status, res.body);
+    const res = await fetch(`${apiurl}/changeStatus?id=${topicId}&status=${status}`, {method : "PATCH"});
     if (res.status == 200) {
+      if(status == topicStatus.Archived){
+        const json : {path : string} = await res.json();
+        return json.path;
+      }
       return true;
     }else {
       const json : {error : string} = await res.json();
