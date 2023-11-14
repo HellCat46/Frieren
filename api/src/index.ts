@@ -231,7 +231,10 @@ app.patch("/changestatus", async (req: Request, res: Response) => {
     }
 
     if (+statuscode == 2) {
-      const path = await createArchive(+id);
+      const records = await pool.query(
+        `SELECT "_pagePaths" as page_paths from topic WHERE _id = ${id};`
+      );
+      const path = await createArchive(+id, records.rows[0].page_paths);
       if (path instanceof Error) throw res;
 
       const result = await pool.query(
@@ -325,10 +328,9 @@ async function saveFile(
   }
 }
 
-async function createArchive(id: number): Promise<string | Error> {
+async function createArchive(id: number, images : string[]): Promise<string | Error> {
   try {
     const pdf = await PDFDocument.create();
-    const images = await readdir(`${notesfolder}/${id}`);
     for (let image of images) {
       const bytes = await readFile(`${notesfolder}/${id}/${image}`);
 
