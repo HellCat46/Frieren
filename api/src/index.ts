@@ -290,6 +290,10 @@ app.delete("/deletetopic", async (req: Request, res: Response) => {
 });
 
 file_router.use("/files", express.static("files"));
+file_router.get("/", async (_, res) => {
+  res.json({ message: "Hello" });
+});
+
 
 app.listen(3000, () => {
   console.log("API is running on http://localhost:3000");
