@@ -295,11 +295,13 @@ file_router.get("/", async (_, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log("API is running on http://localhost:3000");
+app.listen(+process.env.APIPORT!, () => {
+  console.log(`API is running on http://localhost:${process.env.APIPORT}`);
 });
-file_router.listen(3001, "0.0.0.0", () => {
-  console.log("File Router is running on http://0.0.0.0:3001");
+file_router.listen(+process.env.FILEPORT!, "0.0.0.0", () => {
+  console.log(
+    `File Router is running on http://0.0.0.0:${process.env.FILEPORT}`
+  );
 });
 
 async function saveFile(
