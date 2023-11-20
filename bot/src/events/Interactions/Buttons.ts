@@ -163,9 +163,9 @@ async function optionBack(params: Params) {
     params.topic.id,
     pageno
   );
-  if (!link.startsWith("http")) {
+  if (link instanceof Error) {
     await params.interaction.reply({
-      embeds: [embedError(link)],
+      embeds: [embedError(link.message)],
       ephemeral: true,
     });
     return;
@@ -228,9 +228,9 @@ async function optionForward(params: Params) {
     params.topic.id,
     pageno
   );
-  if (!link.startsWith("http")) {
+  if (link instanceof Error) {
     await params.interaction.reply({
-      embeds: [embedError(link)],
+      embeds: [embedError(link.message)],
       ephemeral: true,
     });
     return;
@@ -291,7 +291,7 @@ async function optionAdd(params: Params) {
 
       if (typeof res === "string") {
         await params.interaction.followUp({
-          embeds: [embedError("Error while adding some of the images...")],
+          embeds: [embedError(res)],
           ephemeral: true,
         });
         return;
@@ -300,12 +300,14 @@ async function optionAdd(params: Params) {
     }
     msg.delete();
   });
-  collector.on("end", async () => {
+
+  collector.on("end", async (items) => {
     await params.interaction.deleteReply();
     await params.interaction.followUp({
       embeds: [embed.setDescription("Timer Ended").setFooter(null)],
       ephemeral: true,
     });
+    if (items.size <= 1) return;
 
     params.interaction.client.Topics.set(params.topic.id, {
       name: params.topic.name,
@@ -314,17 +316,22 @@ async function optionAdd(params: Params) {
       archive_link: params.topic.archive_link,
     });
 
+    const link = await getPageLink(
+      params.interaction.client.api_url,
+      params.interaction.client.file_router,
+      params.topic.id,
+      1
+    );
+    if (link instanceof Error) {
+      await params.interaction.editReply({
+        embeds: [embedError(link.message)],
+      });
+      return;
+    }
     await params.interaction.message.edit({
       embeds: [
         EmbedBuilder.from(params.embed)
-          .setImage(
-            await getPageLink(
-              params.interaction.client.api_url,
-              params.interaction.client.file_router,
-              params.topic.id,
-              1
-            )
-          )
+          .setImage(link)
           .setFooter({
             text: `${1} of ${count}`,
           }),
@@ -426,17 +433,24 @@ async function optionRemove(params: Params) {
     return;
   }
 
+  const link = await getPageLink(
+    params.interaction.client.api_url,
+    params.interaction.client.file_router,
+    params.topic.id,
+    +pageno
+  );
+
+  if (link instanceof Error) {
+    await params.interaction.followUp({
+      embeds: [embedError(link.message)],
+    });
+    return;
+  }
+
   await params.interaction.message.edit({
     embeds: [
       EmbedBuilder.from(params.embed)
-        .setImage(
-          await getPageLink(
-            params.interaction.client.api_url,
-            params.interaction.client.file_router,
-            params.topic.id,
-            +pageno
-          )
-        )
+        .setImage(link)
         .setFooter({
           text: `${pageno} of ${params.topic.page_count}`,
         }),
@@ -455,9 +469,9 @@ async function optionRefresh(params: Params) {
       params.topic.id,
       current_page
     );
-    if (!link.startsWith("http")) {
+    if (link instanceof Error) {
       await params.interaction.editReply({
-        content: "Failed to Refresh Embed",
+        embeds: [embedError(link.message)],
       });
       return;
     }
@@ -479,9 +493,9 @@ async function optionRefresh(params: Params) {
       params.topic.id,
       1
     );
-    if (!link.startsWith("http")) {
+    if (link instanceof Error) {
       await params.interaction.editReply({
-        content: "Failed to Refresh Embed",
+        embeds: [embedError(link.message)],
       });
       return;
     }
@@ -564,7 +578,6 @@ async function optionAdvance(params: Params) {
   await params.interaction.deleteReply();
   if (click == null) return;
 
-  
   if (params.topic.status == topicStatus.Archived) {
     await click.reply({
       content: "Topic is archived therefore these options are not accessible.",

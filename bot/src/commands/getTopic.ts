@@ -71,10 +71,9 @@ module.exports = {
             embeds: [],
             components: [],
           })
-      )
+      );
   },
 };
-
 
 async function Response(interaction: ChatInputCommandInteraction, id: number) {
   const topic = interaction.client.Topics.get(id);
@@ -93,9 +92,17 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
 
-  const link = await getPageLink(interaction.client.api_url, interaction.client.file_router, id, 1);
-  if (!link.startsWith("http")) {
-    await interaction.editReply({ embeds: [embedError(link)] });
+  const link = await getPageLink(
+    interaction.client.api_url,
+    interaction.client.file_router,
+    id,
+    1
+  );
+
+  if (link instanceof Error) {
+    await interaction.editReply({
+      content: link.message,
+    });
     return;
   }
 

@@ -53,7 +53,7 @@ export async function getPageLink(
   file_router : string,
   topicId: number,
   pageno: number
-): Promise<string> {
+): Promise<string | Error> {
   try {
     const res = await fetch(
       `${apiurl}/getpage?id=${topicId}&pageno=${pageno}`
@@ -67,7 +67,7 @@ export async function getPageLink(
     }
   } catch (err) {
     console.error(err);
-    return `${err}`;
+    return Error("Failed to get page from the server");
   }
 }
 

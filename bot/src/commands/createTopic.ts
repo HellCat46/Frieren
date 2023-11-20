@@ -60,12 +60,18 @@ module.exports = {
       return;
     }
 
-    const link = await getPageLink(interaction.client.api_url, interaction.client.file_router, +res.id, 1);
-    if (!link.startsWith("http")) {
-      await interaction.editReply({ embeds: [embedError(link)] });
+    const link = await getPageLink(
+      interaction.client.api_url,
+      interaction.client.file_router,
+      +res.id,
+      1
+    );
+    if (link instanceof Error) {
+      await interaction.editReply({
+        content: link.message,
+      });
       return;
     }
-
     const message = embedTopic(res.id, topicName, "1 of 1", link);
     interaction.options.client.Topics.set(res.id, {
       name: topicName,
