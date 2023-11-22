@@ -3,12 +3,16 @@ import {
   ActionRowBuilder,
   TextInputStyle,
   ModalBuilder,
+  EmbedBuilder,
 } from "discord.js";
 import { embedError } from "../../components/EmbedTemplate";
 import { Params } from "./button.types";
+import { getPageLink } from "../../components/Requests";
 
 module.exports = {
   async execute(params: Params) {
+    if (!params.interaction.channel) return;
+
     if (!params.embed.footer) {
       await params.interaction.reply({
         embeds: [embedError("No pages")],
@@ -29,5 +33,56 @@ module.exports = {
       .setTitle("Page No.")
       .addComponents(actionrow);
     await params.interaction.showModal(modal);
+
+    const submitted = await params.interaction
+      .awaitModalSubmit({
+        time: 60000,
+        filter: (author) => author.user.id === params.interaction.user.id,
+      })
+      .catch((err) => new Error("Failed to get input from Form."));
+
+    if (submitted instanceof Error) return;
+
+
+    await submitted.deferReply({ ephemeral: true });
+    const pageno = +submitted.fields.getTextInputValue("pageno");
+    if (!pageno) {
+      await submitted.editReply({
+        embeds: [embedError("Only Numeric Values are allowed.")],
+      });
+      return;
+    } else if (0 >= pageno || pageno > params.topic.page_count) {
+      await submitted.editReply({
+        embeds: [
+          embedError(`Out of Page Range (1-${params.topic.page_count})`),
+        ]
+      });
+      return;
+    }
+
+    const link = await getPageLink(
+      params.interaction.client.api_url,
+      params.interaction.client.file_router,
+      params.topic.id,
+      pageno
+    );
+    if (link instanceof Error) {
+      await params.interaction.followUp({
+        embeds: [embedError(link.message)],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle(params.embed.title)
+      .setImage(link)
+      .setFooter({ text: `${pageno} of ${params.topic.page_count}` });
+
+    await submitted.deleteReply();
+    await params.interaction.message.edit({
+      embeds: [embed],
+      components: params.interaction.message.components,
+    });
   },
 };

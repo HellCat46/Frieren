@@ -6,18 +6,17 @@ module.exports = {
   async execute(interaction: Interaction) {
     if (interaction.isAutocomplete()) return;
     try {
-      if (interaction.isModalSubmit()) await ModalEvents(interaction);
-      else if (interaction.isButton()) {
+      if (interaction.isButton()) {
         const topicId = +interaction.customId.split(".")[0]; // Parses Topic Id from customId of Button
         const topic = interaction.client.Topics.get(topicId);
         if (!topic) return; // If topic with the id exist or not
 
         const embed = interaction.message.embeds[0]; // The main embed shown to user
-
         const button = interaction.client.buttons.get(
           interaction.customId.split(".")[1]
         );
         if (!button) return;
+        
         await button.execute({
           interaction,
           embed,
