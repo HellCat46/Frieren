@@ -5,12 +5,6 @@ import dotenv from "dotenv";
 import { getTopics } from "./components/Requests";
 dotenv.config();
 
-export enum topicStatus {
-  Open,
-  Closed,
-  Archived,
-}
-
 const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,

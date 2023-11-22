@@ -1,5 +1,5 @@
 import { Collection } from "discord.js";
-import { topicStatus } from "../index";
+import { topicStatus } from "../shared.types";
 
 export async function createTopic(
   apiurl: string,
@@ -139,9 +139,10 @@ export function getTopics(
           });
         });
       }
-    ).catch((err) => {
+    )
+    .catch((err) => {
       console.error(err);
-      throw new Error()
+      throw new Error();
     });
   return collection;
 }

@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { createTopic, getPageLink } from "../components/Requests";
 import { embedError, embedTopic } from "../components/EmbedTemplate";
-import { topicStatus } from "../index";
+import { topicStatus } from "../shared.types";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,7 +38,7 @@ module.exports = {
       if (res.id == -1) {
         await interaction.editReply({ embeds: [embedError(res.msg)] });
       } else {
-        const message = embedTopic(res.id, topicName);
+        const message = embedTopic({ id: res.id, topicName });
         interaction.options.client.Topics.set(res.id, {
           name: topicName,
           page_count: 0,
@@ -72,7 +72,12 @@ module.exports = {
       });
       return;
     }
-    const message = embedTopic(res.id, topicName, "1 of 1", link);
+    const message = embedTopic({
+      id: res.id,
+      topicName,
+      footer: "1 of 1",
+      pageurl: link,
+    });
     interaction.options.client.Topics.set(res.id, {
       name: topicName,
       page_count: 1,

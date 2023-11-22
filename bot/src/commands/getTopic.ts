@@ -84,7 +84,7 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
   if (topic.page_count == 0) {
-    const message = embedTopic(id, topic.name);
+    const message = embedTopic({ id, topicName: topic.name });
     await interaction.editReply({
       embeds: [message.embed],
       components: message.rows.slice(1),
@@ -106,7 +106,12 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
 
-  const message = embedTopic(id, topic.name, `1 of ${topic.page_count}`, link);
+  const message = embedTopic({
+    id,
+    topicName: topic.name,
+    footer: `1 of ${topic.page_count}`,
+    pageurl: link,
+  });
   await interaction.editReply({
     embeds: [message.embed],
     components: message.rows,

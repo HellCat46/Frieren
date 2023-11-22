@@ -19,7 +19,7 @@ import {
 } from "../../components/Requests";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { randomInt } from "node:crypto";
-import { topicStatus } from "../../index";
+import { topicStatus } from "../../shared.types";
 
 interface Params {
   interaction: ButtonInteraction;
@@ -476,12 +476,12 @@ async function optionRefresh(params: Params) {
       return;
     }
 
-    const msg = embedTopic(
-      params.topic.id,
-      params.topic.name,
-      `${current_page} of ${params.topic.page_count}`,
-      link
-    );
+    const msg = embedTopic({
+      id: params.topic.id,
+      topicName: params.topic.name,
+      footer: `${current_page} of ${params.topic.page_count}`,
+      pageurl: link,
+    });
     await params.interaction.message.edit({
       embeds: [msg.embed],
       components: msg.rows,
@@ -500,18 +500,18 @@ async function optionRefresh(params: Params) {
       return;
     }
 
-    const msg = embedTopic(
-      params.topic.id,
-      params.topic.name,
-      `${1} of ${params.topic.page_count}`,
-      link
-    );
+    const msg = embedTopic({
+      id : params.topic.id,
+      topicName : params.topic.name,
+      footer : `${1} of ${params.topic.page_count}`,
+      pageurl : link
+  });
     await params.interaction.message.edit({
       embeds: [msg.embed],
       components: msg.rows,
     });
   } else {
-    const message = embedTopic(params.topic.id, params.topic.name);
+    const message = embedTopic({id : params.topic.id, topicName : params.topic.name});
     await params.interaction.message.edit({
       embeds: [message.embed],
       components: message.rows.slice(1),
