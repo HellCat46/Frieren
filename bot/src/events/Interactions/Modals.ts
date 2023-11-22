@@ -44,7 +44,7 @@ export async function ModalEvents(interaction: ModalSubmitInteraction) {
     if (link instanceof Error) {
       await interaction.reply({
         embeds: [embedError(link.message)],
-        ephemeral : true,
+        ephemeral: true,
       });
       return;
     }

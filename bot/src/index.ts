@@ -14,6 +14,7 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.buttons = new Collection();
 client.api_url = process.env.API_URL!;
 client.file_router = process.env.FILE_ROUTER!;
 client.Topics = getTopics(client.api_url, client.file_router);
@@ -30,6 +31,19 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
   } else {
     console.warn(`${filePath} is missing a required some properties.`);
+  }
+}
+
+const buttonsPath = path.join(__dirname, "events/Buttons");
+const buttonsFiles = fs
+  .readdirSync(buttonsPath)
+  .filter((file) => file.endsWith(".js"));
+
+for (const file of buttonsFiles) {
+  const filePath = path.join(buttonsPath, file);
+  const button = require(filePath);
+  if ("execute" in button) {
+    client.buttons.set(file.split(".js")[0], button);
   }
 }
 
