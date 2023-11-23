@@ -8,11 +8,13 @@ import dotenv from "dotenv";
 import { readFile, readdir } from "fs/promises";
 dotenv.config();
 
-const app: Express = express();
+const app = express();
 const file_router = express();
 
 const pool = new Pool();
 const status = ["Open", "Closed", "Archived"];
+
+Initialize({dbpool : pool, app, file_router});
 
 const notesfolder = "files/notes";
 const archivefolder = "files/archive";
@@ -20,6 +22,11 @@ const accepted_types = ["image/png", "image/jpg", "image/jpeg"];
 
 mkdirSync(notesfolder, { recursive: true });
 mkdirSync(archivefolder, { recursive: true });
+
+
+file_router.get("/", async (_, res) => {
+  res.json({ message: "Hello" });
+});
 
 app.get("/", async (_, res) => {
   res.json({ message: "Hello" });
@@ -152,6 +159,7 @@ app.patch("/addpage", async (req: Request, res: Response) => {
     const result = await saveFile(+id, records.rows[0]._pagePaths, pageurl);
     if (result instanceof Error) throw result;
 
+    console.log(result);
     const updates = await pool.query(
       `UPDATE public.topic SET "_pagePaths" = array_append(topic."_pagePaths", '${result}') WHERE topic._id = ${id} RETURNING ARRAY_LENGTH(topic."_pagePaths", 1);`
     );
@@ -289,20 +297,54 @@ app.delete("/deletetopic", async (req: Request, res: Response) => {
   }
 });
 
-file_router.use("/files", express.static("files"));
-file_router.get("/", async (_, res) => {
-  res.json({ message: "Hello" });
-});
 
+async function Initialize(Params: {
+  dbpool: Pool;
+  app: Express;
+  file_router: Express;
+}) {
+  await Params.dbpool
+    .query(
+      `DO $$ BEGIN
+    CREATE TYPE "_status" AS ENUM('Open', 'Closed', 'Archived');
+  EXCEPTION
+    WHEN duplicate_object THEN null;
+  END $$;`
+    )
+    .then(() => console.log("[Database] Successfully created status Enum."))
+    .catch((err) => {
+      console.error("[Database] Failed to create status Enum.");
+      throw new Error(err);
+    });
 
-app.listen(+process.env.APIPORT!, () => {
-  console.log(`API is running on http://localhost:${process.env.APIPORT}`);
-});
-file_router.listen(+process.env.FILEPORT!, "0.0.0.0", () => {
-  console.log(
-    `File Router is running on http://0.0.0.0:${process.env.FILEPORT}`
-  );
-});
+  await Params.dbpool
+    .query(
+      `CREATE TABLE IF NOT EXISTS "topic" (
+	"_id" serial PRIMARY KEY NOT NULL,
+	"_name" varchar(50) NOT NULL,
+	"_status" "_status" NOT NULL,
+	"_pagePaths" varchar(41)[] NOT NULL,
+	"_archivePath" varchar(50),
+	CONSTRAINT "topic__name_unique" UNIQUE("_name")
+  );`
+    )
+    .then(() => console.log("[Database] Successfully created Table topic."))
+    .catch((err) => {
+      console.error("[Database] Failed to create Table topic.");
+      throw new Error(err);
+    });
+
+  app.listen(+process.env.APIPORT!, () => {
+    console.log(`API is running on http://localhost:${process.env.APIPORT}`);
+  });
+
+  file_router.use("/files", express.static("files"));
+  file_router.listen(+process.env.FILEPORT!, "0.0.0.0", () => {
+    console.log(
+      `File Router is running on http://0.0.0.0:${process.env.FILEPORT}`
+    );
+  });
+}
 
 async function saveFile(
   TopicId: number,
@@ -334,7 +376,10 @@ async function saveFile(
   }
 }
 
-async function createArchive(id: number, images : string[]): Promise<string | Error> {
+async function createArchive(
+  id: number,
+  images: string[]
+): Promise<string | Error> {
   try {
     const pdf = await PDFDocument.create();
     for (let image of images) {
