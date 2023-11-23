@@ -94,9 +94,9 @@ module.exports = {
             params.topic.id,
             topicStatus.Open
           );
-          if (!result) {
+          if (result instanceof Error) {
             await click.editReply({
-              embeds: [embedError("Failed to Open the topic")],
+              embeds: [embedError(result.message)],
             });
             return;
           }
@@ -123,9 +123,9 @@ module.exports = {
             params.topic.id,
             topicStatus.Closed
           );
-          if (!result) {
+          if (result instanceof Error) {
             await click.editReply({
-              embeds: [embedError("Failed to Close the topic")],
+              embeds: [embedError(result.message)],
             });
             return;
           }
@@ -145,9 +145,9 @@ module.exports = {
             params.topic.id,
             topicStatus.Archived
           );
-          if (typeof result !== "string") {
+          if (result instanceof Error) {
             await click.editReply({
-              embeds: [embedError("Failed to Archive the topic")],
+              embeds: [embedError(result.message)],
             });
             return;
           }
@@ -170,9 +170,9 @@ module.exports = {
             click.client.api_url,
             params.topic.id
           );
-          if (!result) {
+          if (result instanceof Error) {
             await click.editReply({
-              embeds: [embedError("Failed to Delete the topic")],
+              embeds: [embedError(result.message)],
             });
             return;
           }

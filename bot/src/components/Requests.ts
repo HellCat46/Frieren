@@ -5,7 +5,7 @@ export async function createTopic(
   apiurl: string,
   topicName: string,
   pageurl?: string
-): Promise<{ id: number; msg: string }> {
+): Promise<number | Error> {
   if (!pageurl) pageurl = "";
   try {
     const res = await fetch(
@@ -14,14 +14,18 @@ export async function createTopic(
     );
     if (res.status == 200) {
       const json: { id: number } = await res.json();
-      return { id: json.id, msg: "" };
+      return json.id;
     } else {
       const json: { error: string } = await res.json();
-      return { id: -1, msg: json.error };
+      throw new Error(json.error);
     }
   } catch (err) {
     console.error(err);
-    return { id: -1, msg: `${err}` };
+    if (err instanceof Error) return err;
+
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
   }
 }
 
@@ -29,7 +33,7 @@ export async function addPage(
   apiurl: string,
   id: number,
   pageurl: string
-): Promise<number | string> {
+): Promise<number | Error> {
   try {
     const res = await fetch(`${apiurl}/addpage?id=${id}&pageurl=${pageurl}`, {
       method: "PATCH",
@@ -38,12 +42,15 @@ export async function addPage(
       const json: { page_count: number } = await res.json();
       return json.page_count;
     } else {
-      console.error(res.status);
-      return `${res.status}`;
+      const json: { error: string } = await res.json();
+      throw new Error(json.error);
     }
   } catch (err) {
     console.error(err);
-    return `${err}`;
+    if (err instanceof Error) return err;
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
   }
 }
 
@@ -60,11 +67,14 @@ export async function getPageLink(
       return file_router + json.path;
     } else {
       const json: { error: string } = await res.json();
-      throw json.error;
+      throw new Error(json.error);
     }
   } catch (err) {
     console.error(err);
-    return Error("Failed to get page from the server");
+    if (err instanceof Error) return err;
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
   }
 }
 
@@ -72,20 +82,76 @@ export async function removePage(
   apiurl: string,
   topicId: number,
   pageno: string
-): Promise<number | string> {
+): Promise<boolean | Error> {
   try {
     const res = await fetch(
       `${apiurl}/removepage?id=${topicId}&pageno=${pageno}`,
       { method: "DELETE" }
     );
     if (res.status == 200) {
-      return 0;
+      return true;
     } else {
-      return res.status;
+      const json: { error: string } = await res.json();
+      throw new Error(json.error);
     }
   } catch (err) {
     console.error(err);
-    return `${err}`;
+    if (err instanceof Error) return err;
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
+  }
+}
+
+export async function changeStatus(
+  apiurl: string,
+  topicId: number,
+  status: topicStatus
+): Promise<string | Error> {
+  try {
+    const res = await fetch(
+      `${apiurl}/changeStatus?id=${topicId}&status=${status}`,
+      { method: "PATCH" }
+    );
+    if (res.status == 200) {
+      if (status == topicStatus.Archived) {
+        const json: { path: string } = await res.json();
+        return json.path;
+      }
+      return "";
+    } else {
+      const json: { error: string } = await res.json();
+      throw new Error(json.error);
+    }
+  } catch (err) {
+    console.error(err);
+    if (err instanceof Error) return err;
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
+  }
+}
+
+export async function deleteTopic(
+  apiurl: string,
+  topicId: number
+): Promise<boolean | Error> {
+  try {
+    const res = await fetch(`${apiurl}/deletetopic?id=${topicId}`, {
+      method: "DELETE",
+    });
+    if (res.status == 200) {
+      return true;
+    } else {
+      const json: { error: string } = await res.json();
+      throw new Error(json.error);
+    }
+  } catch (err) {
+    console.error(err);
+    if (err instanceof Error) return err;
+    return new Error(
+      "An unexpected error occurred while sending a request to the API."
+    );
   }
 }
 
@@ -145,50 +211,4 @@ export function getTopics(
       throw new Error();
     });
   return collection;
-}
-
-export async function deleteTopic(
-  apiurl: string,
-  topicId: number
-): Promise<boolean> {
-  try {
-    const res = await fetch(`${apiurl}/deletetopic?id=${topicId}`, {
-      method: "DELETE",
-    });
-    if (res.status == 200) {
-      return true;
-    } else {
-      const json: { error: string } = await res.json();
-      throw json.error;
-    }
-  } catch (err) {
-    console.error(err);
-    return false;
-  }
-}
-
-export async function changeStatus(
-  apiurl: string,
-  topicId: number,
-  status: topicStatus
-): Promise<boolean | string> {
-  try {
-    const res = await fetch(
-      `${apiurl}/changeStatus?id=${topicId}&status=${status}`,
-      { method: "PATCH" }
-    );
-    if (res.status == 200) {
-      if (status == topicStatus.Archived) {
-        const json: { path: string } = await res.json();
-        return json.path;
-      }
-      return true;
-    } else {
-      const json: { error: string } = await res.json();
-      throw json.error;
-    }
-  } catch (err) {
-    console.error(err);
-    return false;
-  }
 }

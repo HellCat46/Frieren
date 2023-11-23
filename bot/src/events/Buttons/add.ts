@@ -49,9 +49,9 @@ module.exports = {
           attachment[1].url
         );
 
-        if (typeof res === "string") {
+        if (res instanceof Error) {
           await params.interaction.followUp({
-            embeds: [embedError(res)],
+            embeds: [embedError(res.message)],
             ephemeral: true,
           });
           return;

@@ -79,9 +79,9 @@ module.exports = {
       params.topic.id,
       pageno
     );
-    if (res != 0) {
+    if (res instanceof Error) {
       await params.interaction.followUp({
-        embeds: [embedError(`${res}`)],
+        embeds: [embedError(res.message)],
         ephemeral: true,
       });
       return;

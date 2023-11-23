@@ -101,7 +101,7 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
 
   if (link instanceof Error) {
     await interaction.editReply({
-      content: link.message,
+      embeds: [embedError(link.message)],
     });
     return;
   }

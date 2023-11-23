@@ -31,15 +31,15 @@ module.exports = {
 
     const topicName = interaction.options.getString("name", true);
     const page = interaction.options.getAttachment("notes");
-    let res: { id: number; msg: string };
+    let res: number | Error;
 
     if (!page) {
       res = await createTopic(interaction.client.api_url, topicName);
-      if (res.id == -1) {
-        await interaction.editReply({ embeds: [embedError(res.msg)] });
+      if (res instanceof Error) {
+        await interaction.editReply({ embeds: [embedError(res.message)] });
       } else {
-        const message = embedTopic({ id: res.id, topicName });
-        interaction.options.client.Topics.set(res.id, {
+        const message = embedTopic({ id: res, topicName });
+        interaction.options.client.Topics.set(res, {
           name: topicName,
           page_count: 0,
           status: topicStatus.Open,
@@ -55,30 +55,30 @@ module.exports = {
     }
 
     res = await createTopic(interaction.client.api_url, topicName, page.url);
-    if (res.id == -1) {
-      await interaction.editReply({ embeds: [embedError(res.msg)] });
+    if (res instanceof Error) {
+      await interaction.editReply({ embeds: [embedError(res.message)] });
       return;
     }
 
     const link = await getPageLink(
       interaction.client.api_url,
       interaction.client.file_router,
-      +res.id,
+      res,
       1
     );
     if (link instanceof Error) {
       await interaction.editReply({
-        content: link.message,
+        embeds: [embedError(link.message)],
       });
       return;
     }
     const message = embedTopic({
-      id: res.id,
+      id: res,
       topicName,
       footer: "1 of 1",
       pageurl: link,
     });
-    interaction.options.client.Topics.set(res.id, {
+    interaction.options.client.Topics.set(res, {
       name: topicName,
       page_count: 1,
       status: topicStatus.Open,

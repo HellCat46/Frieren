@@ -1,5 +1,4 @@
 import { Events, Interaction } from "discord.js";
-import { ModalEvents } from "./Interactions/Modals";
 module.exports = {
   name: Events.InteractionCreate,
   once: false,
