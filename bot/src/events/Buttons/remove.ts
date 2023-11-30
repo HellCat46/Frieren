@@ -12,6 +12,16 @@ import { topicStatus } from "../../shared.types";
 
 module.exports = {
   async execute(params: Params) {
+    if (!params.interaction.memberPermissions?.has("ManageMessages")) {
+      await params.interaction.reply({
+        embeds: [
+          embedError("You don't have permission to perform this action."),
+        ],
+        ephemeral : true
+      });
+      return;
+    }
+
     if (params.topic.status != topicStatus.Open) {
       await params.interaction.reply({
         embeds: [
