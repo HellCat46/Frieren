@@ -13,6 +13,11 @@ import { Params } from "./button.types";
 module.exports = {
   async execute(params: Params) {
     await params.interaction.deferReply({ ephemeral: true });
+    if (!params.interaction.memberPermissions?.has("Administrator")){
+      await params.interaction.editReply({embeds : [embedError("You don't have permission to perform this action.")]});
+      return;
+    }
+
     let link_button = new ButtonBuilder()
       .setLabel("PDF Link")
       .setStyle(ButtonStyle.Link)
