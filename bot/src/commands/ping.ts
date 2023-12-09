@@ -24,7 +24,8 @@ module.exports = {
         **API**: *${end_api - start_api} ms*
         **File Service** : *${end_filer - start_filer} ms*
         **Bot Latency**: *${Date.now() - interaction.createdTimestamp} ms* 
-        **Websocket Ping**: *${interaction.client.ws.ping} ms*`
+        **Websocket Ping**: *${interaction.client.ws.ping} ms*
+        **Started**: <t:${Math.floor((Date.now() - interaction.client.uptime)/1000)}:R>` 
       );
     await interaction.reply({ content: "", embeds: [embed] });
   },
