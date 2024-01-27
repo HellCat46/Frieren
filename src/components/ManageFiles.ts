@@ -64,7 +64,7 @@ export async function createArchive(
             continue;
         }
         createWriteStream(`${archivefolder}/${id}.pdf`).write(await pdf.save());
-        return `/${archivefolder}/${id}.pdf`;
+        return `${id}.pdf`;
     } catch (err) {
         console.error(err);
         return new Error("Unexpected error while creating PDF from images.");

@@ -1,7 +1,7 @@
 import { Collection } from "discord.js";
 import { topicStatus } from "../shared.types";
 import { Pool } from "pg";
-import { createArchive, createTopicFolder, deletePage, deleteTopicFolder, notesfolder, saveFile } from "./ManageFiles";
+import { archivefolder, createArchive, createTopicFolder, deletePage, deleteTopicFolder, notesfolder, saveFile } from "./ManageFiles";
 
 const status = ["Open", "Closed", "Archived"];
 
@@ -186,12 +186,11 @@ export async function changeStatus(
       if (path instanceof Error) return new Error("Unable to Create an Archive.");
 
       const result = await pool.query(
-        `UPDATE topic SET _status = '${topicStatus[status]
-        }', "_archivePath" = '${path}' WHERE _id = ${topicId};`
+        `UPDATE topic SET _status = '${topicStatus[status]}', "_archivePath" = '${archivefolder}/${path}' WHERE _id = ${topicId};`
       );
       if (result.rowCount == 0) return new Error("Topic doesn't exist.");
 
-      return path;
+      return `${archivefolder}/${path}`;
     }
 
     const result = await pool.query(

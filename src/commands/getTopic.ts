@@ -106,7 +106,6 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
 
-  const file = new AttachmentBuilder(path);
   const message = embedTopic({
     id,
     topicName: topic.name,
@@ -116,5 +115,6 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
   await interaction.editReply({
     embeds: [message.embed],
     components: message.rows,
+    files: [new AttachmentBuilder(path)],
   });
 }

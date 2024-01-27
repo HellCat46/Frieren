@@ -4,6 +4,8 @@ import {
   EmbedBuilder,
   ActionRowBuilder,
   ComponentType,
+  AttachmentBuilder,
+  Attachment,
 } from "discord.js";
 import { embedError } from "../../components/EmbedTemplate";
 import { changeStatus, deleteTopic } from "../../components/Requests";
@@ -13,19 +15,13 @@ import { Params } from "./button.types";
 module.exports = {
   async execute(params: Params) {
     await params.interaction.deferReply({ ephemeral: true });
-    if (!params.interaction.memberPermissions?.has("Administrator")){
-      await params.interaction.editReply({embeds : [embedError("You don't have permission to perform this action.")]});
+    if (!params.interaction.memberPermissions?.has("Administrator")) {
+      await params.interaction.editReply({
+        embeds: [
+          embedError("You don't have permission to perform this action."),
+        ],
+      });
       return;
-    }
-
-    let link_button = new ButtonBuilder()
-      .setLabel("PDF Link")
-      .setStyle(ButtonStyle.Link)
-      .setURL("https://youtu.be/dQw4w9WgXcQ?si=n1_Z0PYpWv6U75J4");
-    if (params.topic.archive_link != null) {
-      link_button.setURL(params.topic.archive_link);
-    } else {
-      link_button.setDisabled(true);
     }
 
     const click = await (
@@ -58,7 +54,11 @@ module.exports = {
               .setLabel("Archive")
               .setCustomId("archive")
               .setStyle(ButtonStyle.Danger),
-            link_button
+            new ButtonBuilder()
+              .setLabel("Get PDF")
+              .setCustomId("getPdf")
+              .setStyle(ButtonStyle.Secondary)
+              .setDisabled(params.topic.archive_link == null)
           ),
         ],
       })
@@ -74,7 +74,7 @@ module.exports = {
     await params.interaction.deleteReply();
     if (click == null) return;
 
-    if (params.topic.status == topicStatus.Archived) {
+    if (params.topic.status == topicStatus.Archived && click.customId !== "getPdf") {
       await click.reply({
         content:
           "Topic is archived therefore these options are not accessible.",
@@ -156,17 +156,25 @@ module.exports = {
             });
             return;
           }
-          // click.client.Topics.set(params.topic.id, {
-          //   name: params.topic.name,
-          //   page_count: params.topic.page_count,
-          //   status: topicStatus.Archived,
-          //   //archive_link: params.interaction.client.file_router + result,
-          // });
-          // click.editReply(
-          //   `Successfully Archive the Topic. PDF Link : ${
-          //     params.interaction.client.file_router + result
-          //   }`
-          // );
+          click.client.Topics.set(params.topic.id, {
+            name: params.topic.name,
+            page_count: params.topic.page_count,
+            status: topicStatus.Archived,
+            archive_link: result,
+          });
+          await click.editReply("Successfully Archived the Topic.");
+          await click.followUp({
+            files: [new AttachmentBuilder(result)],
+            ephemeral : true
+          });
+        }
+        break;
+      case "getPdf":
+        {
+          if (params.topic.archive_link != null)
+            await click.editReply({
+              files: [new AttachmentBuilder(params.topic.archive_link)],
+            });
         }
         break;
       case "delete":
