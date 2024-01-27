@@ -1,4 +1,4 @@
-import { EmbedBuilder } from "discord.js";
+import { AttachmentBuilder, EmbedBuilder } from "discord.js";
 import { Params } from "./button.types";
 import { embedError } from "../../components/EmbedTemplate";
 import { addPage, getPageLink } from "../../components/Requests";
@@ -54,7 +54,7 @@ module.exports = {
 
       for (const attachment of msg.attachments) {
         const res = await addPage(
-          params.interaction.client.api_url,
+          params.interaction.client.dbPool,
           params.topic.id,
           attachment[1].url
         );
@@ -86,27 +86,28 @@ module.exports = {
         archive_link: params.topic.archive_link,
       });
 
-      const link = await getPageLink(
-        params.interaction.client.api_url,
-        params.interaction.client.file_router,
+      const path = await getPageLink(
+        params.interaction.client.dbPool,
         params.topic.id,
         1
       );
-      if (link instanceof Error) {
+      if (path instanceof Error) {
         await params.interaction.editReply({
-          embeds: [embedError(link.message)],
+          embeds: [embedError(path.message)],
         });
         return;
       }
+
       await params.interaction.message.edit({
         embeds: [
           EmbedBuilder.from(params.embed)
-            .setImage(link)
+            .setImage(`attachment://${path.split("/").at(-1)}`)
             .setFooter({
               text: `${1} of ${count}`,
             }),
         ],
         components: params.interaction.message.components,
+        files : [new AttachmentBuilder(path)]
       });
     });
   },

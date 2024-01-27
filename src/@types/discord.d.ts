@@ -1,9 +1,11 @@
 import { Collection } from "discord.js";
+import { Pool } from "pg";
 
 declare module "discord.js" {
   export interface Client {
     commands: Collection<any, any>;
     buttons: Collection<any, any>;
+    dbPool : Pool;
     Topics: Collection<
       number,
       {
@@ -13,7 +15,5 @@ declare module "discord.js" {
         archive_link: string | null;
       }
     >;
-    api_url: string;
-    file_router: string
   }
 }

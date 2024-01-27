@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   ComponentType,
@@ -92,25 +93,25 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     return;
   }
 
-  const link = await getPageLink(
-    interaction.client.api_url,
-    interaction.client.file_router,
+  const path = await getPageLink(
+    interaction.client.dbPool,
     id,
     1
   );
 
-  if (link instanceof Error) {
+  if (path instanceof Error) {
     await interaction.editReply({
-      embeds: [embedError(link.message)],
+      embeds: [embedError(path.message)],
     });
     return;
   }
 
+  const file = new AttachmentBuilder(path);
   const message = embedTopic({
     id,
     topicName: topic.name,
     footer: `1 of ${topic.page_count}`,
-    pageurl: link,
+    pageurl: `attachment://${path.split("/").at(-1)}`,
   });
   await interaction.editReply({
     embeds: [message.embed],

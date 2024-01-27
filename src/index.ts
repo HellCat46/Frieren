@@ -2,8 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { Client, IntentsBitField, Collection } from "discord.js";
 import dotenv from "dotenv";
-import { getTopics } from "./components/Requests";
+import { Pool } from "pg";
+import { InitializeDatabase } from "./components/Requests";
+import { initializeFileModule } from "./components/ManageFiles";
 dotenv.config();
+
+initializeFileModule();
 
 const client = new Client({
   intents: [
@@ -13,11 +17,10 @@ const client = new Client({
   ],
 });
 
+client.dbPool = new Pool();
 client.commands = new Collection();
 client.buttons = new Collection();
-client.api_url = process.env.API_URL!;
-client.file_router = process.env.FILE_ROUTER!;
-client.Topics = getTopics(client.api_url, client.file_router);
+client.Topics = new Collection();
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
@@ -62,4 +65,5 @@ for (const file of eventFiles) {
   }
 }
 
+InitializeDatabase(client.dbPool);
 client.login(process.env.DISCORD_TOKEN);

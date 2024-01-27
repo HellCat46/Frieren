@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
   ComponentType,
@@ -85,7 +86,7 @@ module.exports = {
 
     const pageno = params.embed.footer.text.split(" ")[0];
     const res = await removePage(
-      params.interaction.client.api_url,
+      params.interaction.client.dbPool,
       params.topic.id,
       pageno
     );
@@ -115,16 +116,15 @@ module.exports = {
       return;
     }
 
-    const link = await getPageLink(
-      params.interaction.client.api_url,
-      params.interaction.client.file_router,
+    const path = await getPageLink(
+      params.interaction.client.dbPool,
       params.topic.id,
       +pageno
     );
 
-    if (link instanceof Error) {
+    if (path instanceof Error) {
       await params.interaction.followUp({
-        embeds: [embedError(link.message)],
+        embeds: [embedError(path.message)],
       });
       return;
     }
@@ -132,12 +132,13 @@ module.exports = {
     await params.interaction.message.edit({
       embeds: [
         EmbedBuilder.from(params.embed)
-          .setImage(link)
+          .setImage(`attachment://${path.split("/").at(-1)}`)
           .setFooter({
             text: `${pageno} of ${params.topic.page_count}`,
           }),
       ],
       components: params.interaction.message.components,
+      files: [new AttachmentBuilder(path)]
     });
   },
 };

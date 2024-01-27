@@ -95,7 +95,7 @@ module.exports = {
           }
 
           const result = await changeStatus(
-            click.client.api_url,
+            click.client.dbPool,
             params.topic.id,
             topicStatus.Open
           );
@@ -124,7 +124,7 @@ module.exports = {
           }
 
           const result = await changeStatus(
-            click.client.api_url,
+            click.client.dbPool,
             params.topic.id,
             topicStatus.Closed
           );
@@ -146,7 +146,7 @@ module.exports = {
       case "archive":
         {
           const result = await changeStatus(
-            click.client.api_url,
+            click.client.dbPool,
             params.topic.id,
             topicStatus.Archived
           );
@@ -156,23 +156,23 @@ module.exports = {
             });
             return;
           }
-          click.client.Topics.set(params.topic.id, {
-            name: params.topic.name,
-            page_count: params.topic.page_count,
-            status: topicStatus.Archived,
-            archive_link: params.interaction.client.file_router + result,
-          });
-          click.editReply(
-            `Successfully Archive the Topic. PDF Link : ${
-              params.interaction.client.file_router + result
-            }`
-          );
+          // click.client.Topics.set(params.topic.id, {
+          //   name: params.topic.name,
+          //   page_count: params.topic.page_count,
+          //   status: topicStatus.Archived,
+          //   //archive_link: params.interaction.client.file_router + result,
+          // });
+          // click.editReply(
+          //   `Successfully Archive the Topic. PDF Link : ${
+          //     params.interaction.client.file_router + result
+          //   }`
+          // );
         }
         break;
       case "delete":
         {
           const result = await deleteTopic(
-            click.client.api_url,
+            click.client.dbPool,
             params.topic.id
           );
           if (result instanceof Error) {

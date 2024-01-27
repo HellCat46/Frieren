@@ -4,6 +4,7 @@ import {
   EmbedBuilder,
   SlashCommandStringOption,
   SlashCommandAttachmentOption,
+  AttachmentBuilder,
 } from "discord.js";
 import { createTopic, getPageLink } from "../components/Requests";
 import { embedError, embedTopic } from "../components/EmbedTemplate";
@@ -34,7 +35,7 @@ module.exports = {
     let res: number | Error;
 
     if (!page) {
-      res = await createTopic(interaction.client.api_url, topicName);
+      res = await createTopic(interaction.client.dbPool, topicName);
       if (res instanceof Error) {
         await interaction.editReply({ embeds: [embedError(res.message)] });
       } else {
@@ -54,29 +55,31 @@ module.exports = {
       return;
     }
 
-    res = await createTopic(interaction.client.api_url, topicName, page.url);
+    console.log(page.url);
+    res = await createTopic(interaction.client.dbPool, topicName, page.url);
     if (res instanceof Error) {
       await interaction.editReply({ embeds: [embedError(res.message)] });
       return;
     }
 
-    const link = await getPageLink(
-      interaction.client.api_url,
-      interaction.client.file_router,
+    const path = await getPageLink(
+      interaction.client.dbPool,
       res,
       1
     );
-    if (link instanceof Error) {
+    if (path instanceof Error) {
       await interaction.editReply({
-        embeds: [embedError(link.message)],
+        embeds: [embedError(path.message)],
       });
       return;
     }
+
+    const file = new AttachmentBuilder(path);
     const message = embedTopic({
       id: res,
       topicName,
       footer: "1 of 1",
-      pageurl: link,
+      pageurl: `attachment://${path.split("/").at(-1)}`,
     });
     interaction.options.client.Topics.set(res, {
       name: topicName,
@@ -88,6 +91,7 @@ module.exports = {
     await interaction.editReply({
       embeds: [message.embed],
       components: message.rows,
+      files : [file]
     });
   },
 };

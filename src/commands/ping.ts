@@ -10,11 +10,11 @@ module.exports = {
     .setDescription("Returns latency and ping"),
   async execute(interaction: CommandInteraction) {
     const start_api = Date.now();
-    const _ = await fetch(interaction.client.api_url);
+    // const _ = await fetch(interaction.client.api_url);
     const end_api = Date.now();
 
     const start_filer = Date.now();
-    const a = await fetch(interaction.client.api_url);
+    // const a = await fetch(interaction.client.api_url);
     const end_filer = Date.now();
 
     let embed = new EmbedBuilder()

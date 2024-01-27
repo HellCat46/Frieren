@@ -4,6 +4,7 @@ import {
   TextInputStyle,
   ModalBuilder,
   EmbedBuilder,
+  AttachmentBuilder,
 } from "discord.js";
 import { embedError } from "../../components/EmbedTemplate";
 import { Params } from "./button.types";
@@ -60,15 +61,14 @@ module.exports = {
       return;
     }
 
-    const link = await getPageLink(
-      params.interaction.client.api_url,
-      params.interaction.client.file_router,
+    const path = await getPageLink(
+      params.interaction.client.dbPool,
       params.topic.id,
       pageno
     );
-    if (link instanceof Error) {
+    if (path instanceof Error) {
       await params.interaction.followUp({
-        embeds: [embedError(link.message)],
+        embeds: [embedError(path.message)],
         ephemeral: true,
       });
       return;
@@ -76,13 +76,14 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle(params.embed.title)
-      .setImage(link)
+      .setImage(`attachment://${path.split("/").at(-1)}`)
       .setFooter({ text: `${pageno} of ${params.topic.page_count}` });
 
     await submitted.deleteReply();
     await params.interaction.message.edit({
       embeds: [embed],
       components: params.interaction.message.components,
+      files: [new AttachmentBuilder(path)]
     });
   },
 };
