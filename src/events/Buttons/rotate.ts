@@ -3,7 +3,7 @@ import { Params } from "./button.types";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { getPageLink } from "../../components/Requests";
 import { topicStatus } from "../../shared.types";
-import Jimp from "jimp";
+import { rotateImage } from "../../components/ManageFiles";
 
 module.exports = {
   async execute(params: Params) {
@@ -49,9 +49,7 @@ module.exports = {
       return;
     }
 
-    const image = await Jimp.read(path);
-    image.rotate(90);
-    await image.writeAsync(path);
+    rotateImage(path);
 
     const msg = embedTopic({
       id: params.topic.id,
@@ -65,8 +63,6 @@ module.exports = {
       components: msg.rows,
       files: [new AttachmentBuilder(path)],
     });
-    await params.interaction.editReply({
-      content: "Successfully Rotated the Active Page.",
-    });
+    await params.interaction.deleteReply();
   },
 };

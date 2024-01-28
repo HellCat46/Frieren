@@ -2,7 +2,8 @@ import { randomUUID } from "crypto";
 import { readFile, mkdir, rm, unlink } from "node:fs/promises";
 import { createWriteStream, mkdirSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
-
+import sharp from "sharp";
+sharp.cache(false);
 
 export const notesfolder = "files/notes";
 export const archivefolder = "files/archive";
@@ -81,4 +82,14 @@ export async function deleteTopicFolder(id : number) {
 
 export async function createTopicFolder(id : number) {
     await mkdir(`${notesfolder}/${id}`, {recursive : true});
+}
+
+export async function rotateImage(imgPath : string) : Promise<void | Error> {
+    try {
+    const buffer = await sharp(imgPath).rotate(90).toBuffer();
+    await sharp(buffer).toFile(imgPath);
+    }catch(ex){
+        console.error(ex);
+        return new Error("Failed to Rotate Image.")
+    }
 }
