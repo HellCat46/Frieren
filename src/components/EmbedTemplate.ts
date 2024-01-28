@@ -48,15 +48,19 @@ export function embedTopic(params: {
       .setLabel("Remove Page")
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
-      .setCustomId(`${params.id}.refresh`)
-      .setLabel("Refresh")
-      .setStyle(ButtonStyle.Primary)
+    .setCustomId(`${params.id}.rotate`)
+    .setLabel("Rotate")
+    .setStyle(ButtonStyle.Success)
   );
 
   const advance = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(`${params.id}.advance`)
       .setLabel("Advance Options")
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${params.id}.refresh`)
+      .setLabel("Refresh")
       .setStyle(ButtonStyle.Primary)
   );
   return { embed: embed, rows: [move, manage, advance] };
