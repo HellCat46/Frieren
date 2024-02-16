@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { Pool } from "pg";
 import { InitializeDatabase } from "./components/Requests";
 import { initializeFileModule } from "./components/ManageFiles";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
 initializeFileModule();
@@ -21,6 +22,14 @@ client.dbPool = new Pool();
 client.commands = new Collection();
 client.buttons = new Collection();
 client.Topics = new Collection();
+
+
+if (process.env.GOOGLEAPIKEY === undefined) {
+  console.error("No API Key Found");
+  process.exit();
+}
+client.genAI = new GoogleGenerativeAI(process.env.GOOGLEAPIKEY);
+
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
