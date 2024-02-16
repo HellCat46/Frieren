@@ -20,11 +20,21 @@ module.exports = {
     const prompt = interaction.options.getString("prompt", true);
 
     const model = interaction.client.genAI.getGenerativeModel({model : "gemini-1.0-pro"});
-    const result = await model.generateContent(prompt);
-    const res = result.response.text();
+    const result = await model.generateContentStream(prompt);
+    let res = "";
+    let linecount = 1;
+    
+    for await (const chunk of result.stream){
+      const chunktxt = chunk.text();
+      res += chunktxt;
 
-    const embed = new EmbedBuilder().setTitle(prompt).setDescription(res);
+      if(chunktxt.includes('\n')){
+        await interaction.editReply(`Chunk ${linecount++} Received...`);
+      }
+    }
 
-    await interaction.editReply({embeds : [embed]});
+    const embed = new EmbedBuilder().setTitle(prompt).setDescription(res).setColor("Blue");
+
+    await interaction.editReply({content: "", embeds : [embed]});
   },
 };
