@@ -27,43 +27,51 @@ module.exports = {
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     const prompt = interaction.options.getString("prompt", true);
-    const imgPrompt = interaction.options.getAttachment("imgprompt", false);   
+    const imgPrompt = interaction.options.getAttachment("imgprompt", false);
 
-    let imgPart : string | Part;
-    if(imgPrompt != null && imgPrompt.contentType != null) {
+    let imgPart: string | Part;
+    if (imgPrompt != null && imgPrompt.contentType != null) {
       const res = await fetch(imgPrompt.url);
-      imgPart = {inlineData : {data : Buffer.from(await res.arrayBuffer()).toString("base64"), mimeType : imgPrompt.contentType}};
-    }else{
+      imgPart = {
+        inlineData: {
+          data: Buffer.from(await res.arrayBuffer()).toString("base64"),
+          mimeType: imgPrompt.contentType,
+        },
+      };
+    } else {
       imgPart = "";
     }
 
-
-    const model = interaction.client.genAI.getGenerativeModel({
-      model: imgPrompt !== null ? "gemini-pro-vision" : "gemini-1.0-pro",
-    });
-    const result = await model.generateContentStream([prompt, imgPart]);
-
-
     let res = "";
-    let linecount = 1;
-    for await (const chunk of result.stream) {
-      const chunktxt = chunk.text();
-      res += chunktxt;
+    try {
+      const model = interaction.client.genAI.getGenerativeModel({
+        model: imgPrompt !== null ? "gemini-pro-vision" : "gemini-1.0-pro",
+      });
+      const result = await model.generateContentStream([prompt, imgPart]);
 
-      if (chunktxt.includes("\n")) {
-        await interaction.editReply(`Chunk ${linecount++} Received...`);
+      let linecount = 1;
+      for await (const chunk of result.stream) {
+        const chunktxt = chunk.text();
+        res += chunktxt;
+
+        if (chunktxt.includes("\n")) {
+          await interaction.editReply(`Chunk ${linecount++} Received...`);
+        }
       }
+    } catch (ex) {
+      if (ex instanceof Error) {
+        await interaction.editReply(ex.message);
+        return;
+      } else throw ex;
     }
 
+    let question = new EmbedBuilder()
+      .setDescription(`**${prompt}**`)
+      .setColor("Red");
+    if (imgPrompt !== null) question.setImage(imgPrompt.url);
 
-    let embed = new EmbedBuilder()
-      .setDescription(res)
-      .setColor("Blue");
-    if(imgPrompt !== null) embed.setImage(imgPrompt.url);
+    const response = new EmbedBuilder().setDescription(res).setColor("Blue");
 
-    await interaction.editReply({ content: "", embeds: [embed] });
-
-    
+    await interaction.editReply({ content: "", embeds: [question, response] });
   },
 };
-
