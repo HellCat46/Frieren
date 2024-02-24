@@ -6,7 +6,6 @@ import {
   EmbedBuilder,
   SlashCommandAttachmentOption,
 } from "discord.js";
-import { readFileSync } from "fs";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -58,13 +57,13 @@ module.exports = {
           await interaction.editReply(`Chunk ${linecount++} Received...`);
         }
       }
+  
     } catch (ex) {
       if (ex instanceof Error) {
         await interaction.editReply(ex.message);
         return;
       } else throw ex;
     }
-
     let question = new EmbedBuilder()
       .setDescription(`**${prompt}**`)
       .setColor("Red");
