@@ -6,6 +6,7 @@ import { Pool } from "pg";
 import { InitializeDatabase } from "./components/Requests";
 import { initializeFileModule } from "./components/ManageFiles";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AudioPlayerStatus, createAudioPlayer } from "@discordjs/voice";
 dotenv.config();
 
 initializeFileModule();
@@ -15,6 +16,7 @@ const client = new Client({
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMessages,
     IntentsBitField.Flags.MessageContent,
+    IntentsBitField.Flags.GuildVoiceStates
   ],
 });
 
@@ -73,6 +75,11 @@ for (const file of eventFiles) {
     client.on(event.name, (...args) => event.execute(...args));
   }
 }
+
+client.voicePlayer = createAudioPlayer();
+client.voicePlayer.on(AudioPlayerStatus.Idle, () =>{
+  console.log("REEE");
+})
 
 InitializeDatabase(client.dbPool);
 client.login(process.env.DISCORD_TOKEN);

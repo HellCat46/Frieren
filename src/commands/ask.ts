@@ -6,6 +6,7 @@ import {
   EmbedBuilder,
   SlashCommandAttachmentOption,
 } from "discord.js";
+import { embedError } from "../components/EmbedTemplate";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -60,7 +61,7 @@ module.exports = {
   
     } catch (ex) {
       if (ex instanceof Error) {
-        await interaction.editReply(ex.message);
+        await interaction.editReply({ embeds: [embedError(ex.message)]});
         return;
       } else throw ex;
     }
