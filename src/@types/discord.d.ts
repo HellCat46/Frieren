@@ -31,5 +31,7 @@ interface Music {
   author :{
     name : string;
     url : string;
-  }
+  };
+  channel: string;
+  guild : string
 }

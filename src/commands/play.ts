@@ -9,7 +9,6 @@ import {
   getVoiceConnections,
   joinVoiceChannel,
 } from "@discordjs/voice";
-
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
@@ -90,6 +89,8 @@ module.exports = {
           url: fileInfo.author.channel_url,
         },
         length: parseInt(fileInfo.lengthSeconds),
+        channel: interaction.channelId,
+        guild: interaction.guild.id,
       };
     } else {
       const fileInfo = (await yts(input)).videos[0];
@@ -99,12 +100,50 @@ module.exports = {
         thumbnail: fileInfo.thumbnail,
         author: fileInfo.author,
         length: fileInfo.seconds,
+        channel: interaction.channelId,
+        guild: interaction.guild.id,
       };
+    }
+
+    // Music Info Embed
+    const infoEmbed = new EmbedBuilder()
+      .setTitle(music.title)
+      .setDescription(`Media Duration: ${secondsToString(music.length)}`)
+      .setAuthor({ name: music.author.name, url: music.author.url })
+      .setURL(music.url)
+      .setImage(music.thumbnail ? music.thumbnail : null)
+      .setTimestamp()
+      .setFooter({
+        text: `Request by ${interaction.user.username} | Input: ${input}`,
+      });
+
+    // Add Song to Queue
+    if (interaction.client.musicQueue.length > 0) {
+      const notifEmbed = new EmbedBuilder()
+        .setColor("Yellow")
+        .setTitle("Succesfully added in the queue");
+
+      if (interaction.client.musicQueue.length == 1)
+        notifEmbed.setDescription(
+          "This song will be played next after the current one."
+        );
+      else
+        notifEmbed.setDescription(
+          `This song will be played after ${
+            interaction.client.musicQueue.length - 1
+          } songs that are already in list`
+        );
+
+      await interaction.editReply({ embeds: [infoEmbed, notifEmbed] });
+      interaction.client.musicQueue.push(music);
+      return;
     }
 
     // Fetches the Audio
     const stream = ytdl(music.url, {
-      filter: (format) => format.itag == 140 && format.codecs == "mp4a.40.2",
+      filter: "audioonly",
+      quality: "highestaudio",
+      highWaterMark: 1 << 25,
     });
 
     // Joins Voice Channel to Create an Connection
@@ -115,30 +154,18 @@ module.exports = {
         interaction.member.voice.channel.guild.voiceAdapterCreator,
     });
 
-    const resource = createAudioResource(stream, );
+    
+    const resource = createAudioResource(stream);
     interaction.client.voicePlayer.play(resource);
 
-    const subscription = connection.subscribe(interaction.client.voicePlayer);
+    connection.subscribe(interaction.client.voicePlayer);
 
-    // if (subscription) {
-    //   setTimeout(() => {
-    //     subscription.unsubscribe();
-    //   }, music.length * 1000);
-    // } else {
-    //   await interaction.editReply("Subscription fucked up");
-    // }
-
-    const embed = new EmbedBuilder()
-      .setTitle(music.title)
-      .setDescription(`Song Duration: ${music.length}`)
-      .setAuthor({ name: music.author.name, url: music.author.url })
-      .setURL(music.url)
-      .setImage(music.thumbnail ? music.thumbnail : null)
-      .setTimestamp()
-      .setFooter({
-        text: `Request by ${interaction.user.username} | Input: ${input}`,
-      });
-
-    await interaction.editReply({ embeds: [embed] });
+    interaction.client.musicQueue.push(music);
+    await interaction.editReply({ embeds: [infoEmbed] });
   },
 };
+
+function secondsToString(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${seconds - minutes * 60}`;
+}
