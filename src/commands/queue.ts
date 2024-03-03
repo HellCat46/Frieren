@@ -28,14 +28,17 @@ module.exports = {
       return;
     }
 
+    // Creates Embed and adds currenlty playing song in the embed list
     const embed = new EmbedBuilder()
       .setTitle("List of Music in the Queue.")
-      .setColor("Aqua")
+      .setColor("Random")
+      .setTimestamp()
       .addFields({
         name: `${secondsToString(musicQueue[0].length)} (Currently Playing)`,
         value: `[${musicQueue[0].title}](${musicQueue[0].url})`,
       });
 
+    // Adds rest of Songs in the embed list
     for (let idx = 1; idx < musicQueue.length; idx++) {
       embed.addFields({
         name: `${secondsToString(musicQueue[idx].length)}`,

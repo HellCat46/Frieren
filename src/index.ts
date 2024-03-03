@@ -13,7 +13,7 @@ import {
   getVoiceConnection,
   getVoiceConnections,
 } from "@discordjs/voice";
-import ytdl from "ytdl-core";
+import { playMusic } from "./components/musicPlayer";
 dotenv.config();
 
 initializeFileModule();
@@ -85,7 +85,7 @@ for (const file of eventFiles) {
 // Initilize Components Related to Voice
 client.musicQueue = [];
 client.voicePlayer = createAudioPlayer();
-client.voicePlayer.on(AudioPlayerStatus.Idle, async (oldState) => {
+client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
   try {
     // Removes the song that was last playing
     client.musicQueue.shift();
@@ -98,34 +98,13 @@ client.voicePlayer.on(AudioPlayerStatus.Idle, async (oldState) => {
     const music = client.musicQueue[0];
 
     // Channel where song was request. 
+    const guild = await client.guilds.fetch(music.guild);
     const channel = await client.channels.fetch(music.channel);
 
-    // Fetches the Audio
-    const stream = ytdl(music.url, {
-      filter: "audioonly",
-      quality: "highestaudio",
-      highWaterMark: 1 << 25,
-    });
-
-    // gets already existing voice connection
-    const connection = getVoiceConnection(music.guild);
-
-    if (connection == undefined) {
-      client.musicQueue = [];
-      if (channel && channel.isTextBased())
-        await channel.send({
-          embeds: [new EmbedBuilder().setTitle("Unable to get connection....")],
-        });
-      return;
-    }
-
-    const resource = createAudioResource(stream);
-    client.voicePlayer.play(resource);
-
-    connection.subscribe(client.voicePlayer);
+    playMusic(client.voicePlayer, music);
 
     // Notifies user about new song playing
-    if (channel && channel.isTextBased())
+    if (channel?.isTextBased() && guild.members.me?.permissionsIn(channel.id).has("SendMessages") )
       await channel.send({
         embeds: [
           new EmbedBuilder()

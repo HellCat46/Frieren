@@ -20,7 +20,7 @@ import ytdl from "ytdl-core";
 import yts from "yt-search";
 import { Music } from "../@types/discord";
 import { createWriteStream } from "fs";
-import { secondsToString } from "../components/musicPlayer";
+import { playMusic, secondsToString } from "../components/musicPlayer";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -140,12 +140,7 @@ module.exports = {
       return;
     }
 
-    // Fetches the Audio
-    const stream = ytdl(music.url, {
-      filter: "audioonly",
-      quality: "highestaudio",
-      highWaterMark: 1 << 25,
-    });
+    playMusic(interaction.client.voicePlayer, music);
 
     // Joins Voice Channel to Create an Connection
     const connection = joinVoiceChannel({
@@ -154,12 +149,9 @@ module.exports = {
       adapterCreator:
         interaction.member.voice.channel.guild.voiceAdapterCreator,
     });
-
-    const resource = createAudioResource(stream);
-    interaction.client.voicePlayer.play(resource);
-
     connection.subscribe(interaction.client.voicePlayer);
 
+    
     interaction.client.musicQueue.push(music);
     await interaction.editReply({ embeds: [infoEmbed] });
   },
