@@ -20,6 +20,7 @@ import ytdl from "ytdl-core";
 import yts from "yt-search";
 import { Music } from "../@types/discord";
 import { createWriteStream } from "fs";
+import { secondsToString } from "../components/musicPlayer";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -154,7 +155,6 @@ module.exports = {
         interaction.member.voice.channel.guild.voiceAdapterCreator,
     });
 
-    
     const resource = createAudioResource(stream);
     interaction.client.voicePlayer.play(resource);
 
@@ -165,7 +165,3 @@ module.exports = {
   },
 };
 
-function secondsToString(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}:${seconds - minutes * 60}`;
-}
