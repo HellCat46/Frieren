@@ -11,7 +11,7 @@ import {
   createAudioPlayer,
   getVoiceConnection,
 } from "@discordjs/voice";
-import { playMusic } from "./components/musicPlayer";
+import { playMusic, stopMusic } from "./components/musicPlayer";
 dotenv.config();
 
 // Creates Folders required for notes
@@ -102,12 +102,7 @@ client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
     const guildId = client.musicQueue.shift()?.guild;
 
     if (client.musicQueue.length == 0) {
-      client.voicePlayer.stop();
-
-      // Destroys resources allocated the connection and disconnects the bot from Voice Channel
-      if (guildId == null) return;
-      const conn = getVoiceConnection(guildId);
-      if (conn) conn.destroy();
+      stopMusic(client, guildId);
       return;
     }
 

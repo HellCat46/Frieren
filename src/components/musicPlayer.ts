@@ -1,8 +1,9 @@
-import { AudioPlayer, createAudioResource } from "@discordjs/voice";
+import { AudioPlayer, createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import ytdl from "ytdl-core";
 import { Music } from "../@types/discord";
 import {
   ChatInputCommandInteraction,
+  Client,
   EmbedBuilder,
   Guild,
   GuildMember,
@@ -27,6 +28,16 @@ export function playMusic(voicePlayer: AudioPlayer, music: Music) {
   voicePlayer.play(resource);
 }
 
+export function stopMusic(client: Client, guildId: string | undefined | null) {
+  client.musicQueue = [];
+  client.voicePlayer.stop(true);
+
+  // Destroys resources allocated the connection and disconnects the bot from Voice Channel
+  if (guildId == undefined) return;
+  const conn = getVoiceConnection(guildId);
+  if (conn) conn.destroy();
+}
+
 export function isInVoice(interaction: ChatInputCommandInteraction) {
   if (!(interaction.member instanceof GuildMember)) {
     return new EmbedBuilder()
@@ -46,3 +57,5 @@ export function isInVoice(interaction: ChatInputCommandInteraction) {
       .setColor("Red");
   }
 }
+
+

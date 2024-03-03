@@ -1,13 +1,10 @@
-import { AudioPlayer, AudioPlayerStatus, createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
-  GuildMember,
-  PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import ytdl from "ytdl-core";
-import { isInVoice, playMusic } from "../../components/musicPlayer";
+import { isInVoice, playMusic, stopMusic } from "../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -44,7 +41,7 @@ module.exports = {
 
     // Stops the player completely if there no more songs in queue
     if (musicQueue.length === 0) {
-      interaction.client.voicePlayer.stop(true);
+      stopMusic(interaction.client, interaction.guildId);
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -58,9 +55,6 @@ module.exports = {
         ],
       });
 
-      if (interaction.guildId == null) return;
-      const conn = getVoiceConnection(interaction.guildId);
-      if (conn) conn.destroy();
       return;
     }
 
