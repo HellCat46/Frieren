@@ -1,9 +1,9 @@
 import {
+  ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import ytdl from "ytdl-core";
 import { isInVoice, playMusic, stopMusic } from "../../components/musicPlayer";
 
 module.exports = {
@@ -72,5 +72,10 @@ module.exports = {
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
+
+    interaction.client.user?.setActivity({
+      name: music.title,
+      type: ActivityType.Playing,
+    });
   },
 };

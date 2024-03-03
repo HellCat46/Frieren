@@ -1,7 +1,7 @@
 import {
+  ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
 import { isInVoice } from "../../components/musicPlayer";
@@ -21,9 +21,7 @@ module.exports = {
       return;
     }
 
-    
-
-    if (interaction.client.voicePlayer.pause(true))
+    if (interaction.client.voicePlayer.pause(true)){
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -36,6 +34,9 @@ module.exports = {
             .setFooter({ text: `Request By: ${interaction.user.username}` }),
         ],
       });
+
+      interaction.client.user.setActivity();
+    }
     else
       await interaction.editReply({
         embeds: [

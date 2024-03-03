@@ -1,4 +1,5 @@
 import {
+  ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
@@ -37,19 +38,27 @@ module.exports = {
 
     // The Queue wouldn't be empty if the interpreter reached here
     // Why? Because Bot will disconnect from the VC as soon as last song has ended/skipped/stopped.
-    if (interaction.client.voicePlayer.unpause())
+    if (interaction.client.voicePlayer.unpause()){
+      const music = interaction.client.musicQueue[0];
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Successfully Resumed the Music Player")
             .setDescription(
-              `The Song [${interaction.client.musicQueue[0].title}](${interaction.client.musicQueue[0].url}) has been successfully resumed.`
+              `The Song [${music.title}](${music.url}) has been successfully resumed.`
             )
             .setColor("Green")
             .setTimestamp()
             .setFooter({ text: `Request by: ${interaction.user.username}` }),
         ],
       });
+
+      interaction.client.user?.setActivity({
+            name: music.title,
+            type: ActivityType.Playing,
+        
+      });
+    }
     else
       await interaction.editReply({
         embeds: [

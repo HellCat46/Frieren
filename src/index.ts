@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { Client, IntentsBitField, Collection, EmbedBuilder } from "discord.js";
+import { Client, IntentsBitField, Collection, EmbedBuilder, ActivityType } from "discord.js";
 import dotenv from "dotenv";
 import { Pool } from "pg";
 import { InitializeDatabase } from "./components/Requests";
@@ -129,11 +129,16 @@ client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
             .setColor("Green"),
         ],
       });
+    
+    client.user?.setActivity({
+          name: music.title,
+          type: ActivityType.Playing,
+    });
   } catch (ex) {
     console.error(ex);
   }
 });
 
-client.user?.setPresence({});
+
 InitializeDatabase(client.dbPool);
 client.login(process.env.DISCORD_TOKEN);

@@ -25,7 +25,7 @@ export function playMusic(voicePlayer: AudioPlayer, music: Music) {
   });
 
   const resource = createAudioResource(stream);
-  voicePlayer.play(resource);
+  voicePlayer.play(resource);  
 }
 
 export function stopMusic(client: Client, guildId: string | undefined | null) {
@@ -36,6 +36,9 @@ export function stopMusic(client: Client, guildId: string | undefined | null) {
   if (guildId == undefined) return;
   const conn = getVoiceConnection(guildId);
   if (conn) conn.destroy();
+  
+  
+  client.user?.setActivity();
 }
 
 export function isInVoice(interaction: ChatInputCommandInteraction) {

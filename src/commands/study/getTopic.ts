@@ -1,13 +1,11 @@
 import {
   ActionRowBuilder,
   AttachmentBuilder,
-  AutocompleteInteraction,
   ChatInputCommandInteraction,
   ComponentType,
   EmbedBuilder,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuInteraction,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";

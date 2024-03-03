@@ -1,15 +1,6 @@
+import { joinVoiceChannel } from "@discordjs/voice";
 import {
-  AudioPlayer,
-  NoSubscriberBehavior,
-  StreamType,
-  createAudioPlayer,
-  createAudioResource,
-  getGroups,
-  getVoiceConnection,
-  getVoiceConnections,
-  joinVoiceChannel,
-} from "@discordjs/voice";
-import {
+  ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
   GuildMember,
@@ -35,7 +26,7 @@ module.exports = {
         .setDescription("Name or Link of Song")
         .setRequired(true)
     ),
-    
+
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
@@ -152,9 +143,14 @@ module.exports = {
     });
     connection.subscribe(interaction.client.voicePlayer);
 
-    
     interaction.client.musicQueue.push(music);
     await interaction.editReply({ embeds: [infoEmbed] });
+
+    interaction.client.user?.setActivity(
+        {
+          name: music.title,
+          type: ActivityType.Playing,
+        },
+     );
   },
 };
-
