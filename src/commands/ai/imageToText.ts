@@ -6,7 +6,7 @@ import {
   EmbedBuilder,
   SlashCommandAttachmentOption,
 } from "discord.js";
-import { embedError } from "../components/EmbedTemplate";
+import { embedError } from "../../components/EmbedTemplate";
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("imgtotext")

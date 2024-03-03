@@ -3,7 +3,7 @@ import {
   SlashCommandBuilder,
   EmbedBuilder,
 } from "discord.js";
-import { secondsToString } from "../components/musicPlayer";
+import { secondsToString } from "../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()

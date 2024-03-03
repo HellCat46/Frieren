@@ -9,15 +9,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   AudioPlayerStatus,
   createAudioPlayer,
-  createAudioResource,
   getVoiceConnection,
-  getVoiceConnections,
 } from "@discordjs/voice";
 import { playMusic } from "./components/musicPlayer";
 dotenv.config();
 
+// Creates Folders required for notes
 initializeFileModule();
 
+// Initilize Discord Bot Client
 const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
@@ -27,33 +27,43 @@ const client = new Client({
   ],
 });
 
+// Initilize Database Pool and Topic Collection for Notes
 client.dbPool = new Pool();
 client.Topics = new Collection();
 
+// Initilize Commands and Button Interaction Collection
 client.commands = new Collection();
 client.buttons = new Collection();
 
+// Initilize Gemini Client for AI stuff
 if (process.env.GOOGLEAPIKEY === undefined) {
   console.error("No API Key Found");
   process.exit();
 }
 client.genAI = new GoogleGenerativeAI(process.env.GOOGLEAPIKEY);
 
-const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter((file) => file.endsWith(".js"));
+// Adds Commands to Collection
+const commandFolderPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(commandFolderPath);
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  if ("data" in command && "execute" in command) {
-    client.commands.set(command.data.name, command);
-  } else {
-    console.warn(`${filePath} is missing a required some properties.`);
+for (const folder of commandFolders) {
+  const commandsPath = path.join(commandFolderPath, folder);
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file: string) => file.endsWith(".js"));
+
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    if ("data" in command && "execute" in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.warn(`${filePath} is missing a required some properties.`);
+    }
   }
 }
 
+// Adds Buttons to Collection
 const buttonsPath = path.join(__dirname, "events/Buttons");
 const buttonsFiles = fs
   .readdirSync(buttonsPath)
@@ -67,6 +77,7 @@ for (const file of buttonsFiles) {
   }
 }
 
+// Add Event Handlers to Event Listeners
 const eventsPath = path.join(__dirname, "events");
 const eventFiles = fs
   .readdirSync(eventsPath)
@@ -88,45 +99,46 @@ client.voicePlayer = createAudioPlayer();
 client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
   try {
     // Removes the song that was last playing
-    const guildId =  client.musicQueue.shift()?.guild;
+    const guildId = client.musicQueue.shift()?.guild;
 
-    if (client.musicQueue.length == 0){
+    if (client.musicQueue.length == 0) {
       client.voicePlayer.stop();
 
       // Destroys resources allocated the connection and disconnects the bot from Voice Channel
-      if(guildId == null) return
+      if (guildId == null) return;
       const conn = getVoiceConnection(guildId);
-      if(conn) conn.destroy(); 
+      if (conn) conn.destroy();
       return;
     }
 
     const music = client.musicQueue[0];
 
-    // Channel where song was request. 
+    // Channel where song was request.
     const guild = await client.guilds.fetch(music.guild);
     const channel = await client.channels.fetch(music.channel);
 
     playMusic(client.voicePlayer, music);
 
     // Notifies user about new song playing
-    if (channel?.isTextBased() && guild.members.me?.permissionsIn(channel.id).has("SendMessages") )
+    if (
+      channel?.isTextBased() &&
+      guild.members.me?.permissionsIn(channel.id).has("SendMessages")
+    )
       await channel.send({
         embeds: [
           new EmbedBuilder()
             .setTitle(`Now Playing: ${music.title}`)
-            .setDescription(`Now Queue has ${client.musicQueue.length-1} song('s) left.`)
+            .setDescription(
+              `Now Queue has ${client.musicQueue.length - 1} song('s) left.`
+            )
             .setColor("Green"),
         ],
       });
   } catch (ex) {
-
     console.error(ex);
   }
 });
 
-
-client.user?.setPresence({
-  
-})
+client.user?.setPresence({});
 InitializeDatabase(client.dbPool);
 client.login(process.env.DISCORD_TOKEN);

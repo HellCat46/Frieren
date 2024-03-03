@@ -10,8 +10,8 @@ import {
   StringSelectMenuInteraction,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { embedError, embedTopic } from "../components/EmbedTemplate";
-import { getPageLink } from "../components/Requests";
+import { embedError, embedTopic } from "../../components/EmbedTemplate";
+import { getPageLink } from "../../components/Requests";
 
 module.exports = {
   data: new SlashCommandBuilder()

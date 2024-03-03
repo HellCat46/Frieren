@@ -15,12 +15,12 @@ import {
   GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
-import { embedError } from "../components/EmbedTemplate";
+import { embedError } from "../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import yts from "yt-search";
-import { Music } from "../@types/discord";
+import { Music } from "../../@types/discord";
 import { createWriteStream } from "fs";
-import { playMusic, secondsToString } from "../components/musicPlayer";
+import { playMusic, secondsToString } from "../../components/musicPlayer";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;

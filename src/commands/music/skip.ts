@@ -6,7 +6,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import ytdl from "ytdl-core";
-import { playMusic } from "../components/musicPlayer";
+import { playMusic } from "../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()
