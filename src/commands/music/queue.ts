@@ -9,6 +9,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("queue")
     .setDescription("Get Queue of Music"),
+    
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     const musicQueue = interaction.client.musicQueue;

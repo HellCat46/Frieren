@@ -1,21 +1,29 @@
-import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
+import { AudioPlayer, AudioPlayerStatus, createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
+  GuildMember,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import ytdl from "ytdl-core";
-import { playMusic } from "../../components/musicPlayer";
+import { isInVoice, playMusic } from "../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("skip")
     .setDescription("Skips the currently playing song"),
+
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     const musicQueue = interaction.client.musicQueue;
 
+    // Checks for user being in same channel as Bot
+    const isUsingVoice = isInVoice(interaction);
+    if (isUsingVoice instanceof EmbedBuilder) {
+      await interaction.editReply({ embeds: [isUsingVoice] });
+      return;
+    }
 
     if (musicQueue.length === 0) {
       await interaction.editReply({
@@ -30,11 +38,10 @@ module.exports = {
       });
       return;
     }
-    
+
     // Removes Currenlty playing song from Queue
     musicQueue.shift();
 
-    
     // Stops the player completely if there no more songs in queue
     if (musicQueue.length === 0) {
       interaction.client.voicePlayer.stop(true);
@@ -53,7 +60,7 @@ module.exports = {
 
       if (interaction.guildId == null) return;
       const conn = getVoiceConnection(interaction.guildId);
-      if (conn) conn.destroy(); 
+      if (conn) conn.destroy();
       return;
     }
 
