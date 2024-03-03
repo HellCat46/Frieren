@@ -1,4 +1,4 @@
-import { createAudioResource } from "@discordjs/voice";
+import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
@@ -50,6 +50,10 @@ module.exports = {
             .setFooter({ text: `Request by: ${interaction.user.username}` }),
         ],
       });
+
+      if (interaction.guildId == null) return;
+      const conn = getVoiceConnection(interaction.guildId);
+      if (conn) conn.destroy(); 
       return;
     }
 

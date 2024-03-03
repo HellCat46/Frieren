@@ -88,10 +88,15 @@ client.voicePlayer = createAudioPlayer();
 client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
   try {
     // Removes the song that was last playing
-    client.musicQueue.shift();
+    const guildId =  client.musicQueue.shift()?.guild;
 
     if (client.musicQueue.length == 0){
       client.voicePlayer.stop();
+
+      // Destroys resources allocated the connection and disconnects the bot from Voice Channel
+      if(guildId == null) return
+      const conn = getVoiceConnection(guildId);
+      if(conn) conn.destroy(); 
       return;
     }
 
