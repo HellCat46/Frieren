@@ -1,4 +1,5 @@
 import { Events, Interaction } from "discord.js";
+import { embedError } from "../components/EmbedTemplate";
 module.exports = {
   name: Events.InteractionCreate,
   once: false,
@@ -38,12 +39,12 @@ module.exports = {
       console.error(error);
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
-          content: "There was an error while executing this command!",
+          embeds: [embedError("There was an error while executing this command!")],
           ephemeral: true,
         });
       } else {
         await interaction.reply({
-          content: "There was an error while executing this command!",
+          embeds: [embedError("There was an error while executing this command!")],
           ephemeral: true,
         });
       }

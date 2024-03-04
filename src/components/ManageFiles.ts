@@ -9,10 +9,6 @@ export const notesfolder = "files/notes";
 export const archivefolder = "files/archive";
 const accepted_types = ["image/png", "image/jpg", "image/jpeg"];
 
-export function initializeFileModule() {
-    mkdirSync(notesfolder, { recursive: true });
-    mkdirSync(archivefolder, { recursive: true });
-}
 
 export async function saveFile(
     TopicId: number,

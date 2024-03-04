@@ -3,8 +3,7 @@ import path from "node:path";
 import { Client, IntentsBitField, Collection, EmbedBuilder, ActivityType } from "discord.js";
 import dotenv from "dotenv";
 import { Pool } from "pg";
-import { InitializeDatabase } from "./components/Requests";
-import { initializeFileModule } from "./components/ManageFiles";
+import { InitializeDatabase,InitializeFileModule } from "./components/Initialize";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   AudioPlayerStatus,
@@ -15,7 +14,7 @@ import { playMusic, stopMusic } from "./components/musicPlayer";
 dotenv.config();
 
 // Creates Folders required for notes
-initializeFileModule();
+InitializeFileModule();
 
 // Initilize Discord Bot Client
 const client = new Client({
