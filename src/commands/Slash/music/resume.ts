@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import { isInVoice } from "../../components/musicPlayer";
+import { isInVoice } from "../../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()

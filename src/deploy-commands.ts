@@ -16,7 +16,7 @@ if (token == null || guildId == null || clientId == null) {
 const commands = [];
 
 // Get List of All Subfolders in Commands Folder
-const commandFolderPath = path.join(__dirname, "commands");
+const commandFolderPath = path.join(__dirname, "commands/Slash");
 const commandFolders = fs.readdirSync(commandFolderPath);
 
 // Adds them to Commands Array

@@ -6,9 +6,9 @@ import {
   SlashCommandAttachmentOption,
   AttachmentBuilder,
 } from "discord.js";
-import { createTopic, getPageLink } from "../../components/Requests";
-import { embedError, embedTopic } from "../../components/EmbedTemplate";
-import { topicStatus } from "../../shared.types";
+import { createTopic, getPageLink } from "../../../components/Requests";
+import { embedError, embedTopic } from "../../../components/EmbedTemplate";
+import { topicStatus } from "../../../shared.types";
 
 module.exports = {
   data: new SlashCommandBuilder()

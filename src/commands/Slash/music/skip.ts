@@ -4,7 +4,11 @@ import {
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import { isInVoice, playMusic, stopMusic } from "../../components/musicPlayer";
+import {
+  isInVoice,
+  playMusic,
+  stopMusic,
+} from "../../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()

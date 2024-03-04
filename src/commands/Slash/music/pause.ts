@@ -2,9 +2,10 @@ import {
   ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
+  GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
-import { isInVoice } from "../../components/musicPlayer";
+import { isInVoice } from "../../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,6 +20,16 @@ module.exports = {
     if (isUsingVoice instanceof EmbedBuilder) {
       await interaction.editReply({ embeds: [isUsingVoice] });
       return;
+    }
+
+    if(interaction.memberPermissions?.has("Administrator")){
+      if (!(interaction.member instanceof GuildMember)) {
+        await interaction.editReply({ embeds: [ new EmbedBuilder()
+          .setTitle("User is not a Guild Member")
+          .setColor("Red")]});
+          return;
+        }
+        if (interaction.member.voice.channel?.isVoiceBased()) console.log(interaction.member.voice.channel.members);
     }
 
     if (interaction.client.voicePlayer.pause(true)){

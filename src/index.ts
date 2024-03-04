@@ -43,7 +43,7 @@ if (process.env.GOOGLEAPIKEY === undefined) {
 client.genAI = new GoogleGenerativeAI(process.env.GOOGLEAPIKEY);
 
 // Adds Commands to Collection
-const commandFolderPath = path.join(__dirname, "commands");
+const commandFolderPath = path.join(__dirname, "commands/Slash");
 const commandFolders = fs.readdirSync(commandFolderPath);
 
 for (const folder of commandFolders) {
@@ -64,7 +64,7 @@ for (const folder of commandFolders) {
 }
 
 // Adds Buttons to Collection
-const buttonsPath = path.join(__dirname, "events/Buttons");
+const buttonsPath = path.join(__dirname, "commands/Buttons");
 const buttonsFiles = fs
   .readdirSync(buttonsPath)
   .filter((file) => file.endsWith(".js"));

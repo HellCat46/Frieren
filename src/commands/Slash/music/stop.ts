@@ -7,8 +7,8 @@ import {
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
-import { isInVoice, stopMusic } from "../../components/musicPlayer";
-import { embedError } from "../../components/EmbedTemplate";
+import { isInVoice, stopMusic } from "../../../components/musicPlayer";
+import { embedError } from "../../../components/EmbedTemplate";
 import { getVoiceConnection } from "@discordjs/voice";
 
 module.exports = {
