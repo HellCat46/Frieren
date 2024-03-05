@@ -38,9 +38,9 @@ export async function InitializeDatabase(dbpool: Pool) {
     .query(
       `CREATE TABLE IF NOT EXISTS "playlist" ( "_userId" varchar(20) PRIMARY KEY NOT NULL, "_songIds" varchar[20])`
     )
-    .then(() => console.log("[Music] Successfully create Table playlist."))
+    .then(() => console.log("[Database] Successfully create Table playlist."))
     .catch((err: Error) => {
-      console.error("[Music] Failed to create Table playlist.");
+      console.error("[Database] Failed to create Table playlist.");
       console.log(err);
     });
 }
