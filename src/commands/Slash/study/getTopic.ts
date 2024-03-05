@@ -4,6 +4,8 @@ import {
   ChatInputCommandInteraction,
   ComponentType,
   EmbedBuilder,
+  Interaction,
+  MessageEditOptions,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -62,7 +64,10 @@ module.exports = {
         time: 120000,
         componentType: ComponentType.StringSelect,
       })
-      .then(async (value) => await Response(interaction, +value.values[0]))
+      .then(
+        async (i) =>
+          await i.update(await Response(i, +i.values[0]))
+      )
       .catch(
         async () =>
           await interaction.editReply({
@@ -74,34 +79,35 @@ module.exports = {
   },
 };
 
-async function Response(interaction: ChatInputCommandInteraction, id: number) {
+// Note for HellCat
+// Discord Frontend UI doesn't update properly when you change the actions rows and embed 
+// In this case, Selection menu was at 1st position in action row when was at 1st position in message component list
+// So when A interaction is created by selection menu and doesn't get any response, the new component at same location as selection
+// Will have loading animation and interaction Failed Message
+async function Response(
+  interaction: Interaction,
+  id: number
+): Promise<MessageEditOptions> {
   const topic = interaction.client.Topics.get(id);
   if (!topic) {
-    await interaction.editReply({
+    return {
       embeds: [embedError("No Topic Exists with this id")],
-    });
-    return;
+    };
   }
   if (topic.page_count == 0) {
     const message = embedTopic({ id, topicName: topic.name });
-    await interaction.editReply({
+    return {
       embeds: [message.embed],
       components: message.rows.slice(1),
-    });
-    return;
+    };
   }
 
-  const path = await getPageLink(
-    interaction.client.dbPool,
-    id,
-    1
-  );
+  const path = await getPageLink(interaction.client.dbPool, id, 1);
 
   if (path instanceof Error) {
-    await interaction.editReply({
+    return {
       embeds: [embedError(path.message)],
-    });
-    return;
+    };
   }
 
   const message = embedTopic({
@@ -110,9 +116,9 @@ async function Response(interaction: ChatInputCommandInteraction, id: number) {
     footer: `1 of ${topic.page_count}`,
     pageurl: `attachment://${path.split("/").at(-1)}`,
   });
-  await interaction.editReply({
+  return {
     embeds: [message.embed],
     components: message.rows,
     files: [new AttachmentBuilder(path)],
-  });
+  };
 }
