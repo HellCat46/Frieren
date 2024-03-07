@@ -42,6 +42,7 @@ export function stopMusic(client: Client, guildId: string | undefined | null) {
   const conn = getVoiceConnection(guildId);
   if (conn) conn.destroy();
 
+  client.music.loop = false;
   client.user?.setActivity();
 }
 
