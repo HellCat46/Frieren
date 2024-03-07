@@ -14,9 +14,7 @@ import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import yts from "yt-search";
 import { Music } from "../../../@types/discord";
-import { createWriteStream } from "fs";
 import { addToPlaylist, playMusic, removeToPlaylist, secondsToString } from "../../../components/musicPlayer";
-import { Pool } from "pg";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -134,24 +132,24 @@ module.exports = {
       );
 
     // Add Song to Queue
-    if (interaction.client.musicQueue.length > 0) {
+    if (interaction.client.music.queue.length > 0) {
       const notifEmbed = new EmbedBuilder()
         .setColor("Yellow")
         .setTitle("Succesfully added in the queue");
 
-      if (interaction.client.musicQueue.length == 1)
+      if (interaction.client.music.queue.length == 1)
         notifEmbed.setDescription(
           "This song will be played next after the current one."
         );
       else
         notifEmbed.setDescription(
           `This song will be played after ${
-            interaction.client.musicQueue.length - 1
+            interaction.client.music.queue.length - 1
           } songs that are already in list`
         );
 
-      interaction.client.musicQueue.push(music);
-      const res = await (
+      interaction.client.music.queue.push(music);
+      const res = await(
         await interaction.editReply({
           embeds: [infoEmbed, notifEmbed],
           components: [playlistBtns],
@@ -160,24 +158,23 @@ module.exports = {
         .awaitMessageComponent({
           // Collector to Collect Playlist buttons
           filter: (i) => i.user.id == interaction.user.id,
-          time: music.length*1000,
+          time: music.length * 1000,
           componentType: ComponentType.Button,
         })
         .then((i) => i.customId)
         .catch(() => null);
 
-
-    await interaction.editReply({
-      embeds: [infoEmbed, notifEmbed],
-      components: []
-    });
+      await interaction.editReply({
+        embeds: [infoEmbed, notifEmbed],
+        components: [],
+      });
 
       if (res == null) return;
       await collPlaylistBtn(videoId, interaction, res);
       return;
     }
 
-    playMusic(interaction.client.voicePlayer, music);
+    playMusic(interaction.client.music.player, music);
 
     // Joins Voice Channel to Create an Connection
     const connection = joinVoiceChannel({
@@ -186,9 +183,9 @@ module.exports = {
       adapterCreator:
         interaction.member.voice.channel.guild.voiceAdapterCreator,
     });
-    connection.subscribe(interaction.client.voicePlayer);
+    connection.subscribe(interaction.client.music.player);
 
-    interaction.client.musicQueue.push(music);
+    interaction.client.music.queue.push(music);
 
     interaction.client.user?.setActivity({
       name: music.title,

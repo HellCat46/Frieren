@@ -12,7 +12,7 @@ module.exports = {
     
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
-    const musicQueue = interaction.client.musicQueue;
+    const musicQueue = interaction.client.music.queue;
 
     // If Nothing is playing
     if (musicQueue.length === 0) {

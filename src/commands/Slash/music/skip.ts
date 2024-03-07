@@ -17,7 +17,7 @@ module.exports = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
-    const musicQueue = interaction.client.musicQueue;
+    const musicQueue = interaction.client.music.queue;
 
     // Checks for user being in same channel as Bot
     const isUsingVoice = isInVoice(interaction);
@@ -64,7 +64,7 @@ module.exports = {
 
     // Fetches Audio from Youtube
     const music = musicQueue[0];
-    playMusic(interaction.client.voicePlayer, music);
+    playMusic(interaction.client.music.player, music);
 
     const embed = new EmbedBuilder()
       .setTitle("Successfully Skipped the Song")

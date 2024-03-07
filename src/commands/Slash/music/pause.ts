@@ -22,23 +22,23 @@ module.exports = {
       return;
     }
 
-    if(interaction.memberPermissions?.has("Administrator")){
-      if (!(interaction.member instanceof GuildMember)) {
-        await interaction.editReply({ embeds: [ new EmbedBuilder()
-          .setTitle("User is not a Guild Member")
-          .setColor("Red")]});
-          return;
-        }
-        if (interaction.member.voice.channel?.isVoiceBased()) console.log(interaction.member.voice.channel.members);
-    }
+    // if(interaction.memberPermissions?.has("Administrator")){
+    //   if (!(interaction.member instanceof GuildMember)) {
+    //     await interaction.editReply({ embeds: [ new EmbedBuilder()
+    //       .setTitle("User is not a Guild Member")
+    //       .setColor("Red")]});
+    //       return;
+    //     }
+    //     if (interaction.member.voice.channel?.isVoiceBased()) console.log(interaction.member.voice.channel.members);
+    // }
 
-    if (interaction.client.voicePlayer.pause(true)){
+    if (interaction.client.music.player.pause(true)){
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Successfully Paused the Music Player")
             .setDescription(
-              `The Song [${interaction.client.musicQueue[0].title}](${interaction.client.musicQueue[0].url}) has been successfully paused. Use \`/resume\` to start from where you left again.`
+              `The Song [${interaction.client.music.queue[0].title}](${interaction.client.music.queue[0].url}) has been successfully paused. Use \`/resume\` to start from where you left again.`
             )
             .setTimestamp()
             .setColor("Yellow")

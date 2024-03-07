@@ -38,8 +38,8 @@ module.exports = {
 
     // The Queue wouldn't be empty if the interpreter reached here
     // Why? Because Bot will disconnect from the VC as soon as last song has ended/skipped/stopped.
-    if (interaction.client.voicePlayer.unpause()){
-      const music = interaction.client.musicQueue[0];
+    if (interaction.client.music.player.unpause()){
+      const music = interaction.client.music.queue[0];
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

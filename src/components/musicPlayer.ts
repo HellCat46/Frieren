@@ -34,8 +34,8 @@ export function playMusic(voicePlayer: AudioPlayer, music: Music) {
 }
 
 export function stopMusic(client: Client, guildId: string | undefined | null) {
-  client.musicQueue = [];
-  client.voicePlayer.stop(true);
+  client.music.queue = [];
+  client.music.player.stop(true);
 
   // Destroys resources allocated the connection and disconnects the bot from Voice Channel
   if (guildId == undefined) return;
@@ -112,7 +112,7 @@ export async function removeToPlaylist(
   );
 }
 
-export async function getPlaylistSongs(dbPool: Pool, userId: string) {
+export async function getPlaylist(dbPool: Pool, userId: string) {
   // Retrieve all video IDs
   const res = await dbPool.query(
     `SELECT "_songIds" FROM playlist WHERE playlist."_userId" = '${userId}';`
@@ -122,7 +122,7 @@ export async function getPlaylistSongs(dbPool: Pool, userId: string) {
     const songs : string[] = res.rows[0]._songIds;
     if (songs.length >0) return songs;
 
-    return new Error("You don't have any songs in your Playlist.")
+    return new Error("User doesn't have any songs in your Playlist.")
   }
-  return new Error("You don't have a playlist.");
+  return new Error("User doesn't have a playlist.");
 }

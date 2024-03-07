@@ -5,7 +5,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import {
-  getPlaylistSongs,
+  getPlaylist,
   isInVoice,
   playMusic,
   secondsToString,
@@ -58,7 +58,7 @@ module.exports = {
     }
 
     // Songs in User Playlist
-    const songs = await getPlaylistSongs(
+    const songs = await getPlaylist(
       interaction.client.dbPool,
       interaction.user.id
     );
@@ -78,7 +78,7 @@ module.exports = {
         addedSongs.push({
           title: videoInfo.title,
           url: videoInfo.video_url,
-          thumbnail: videoInfo.video_url,
+          thumbnail: videoInfo.thumbnails[0].url,
           length: parseInt(videoInfo.lengthSeconds),
           author: {
             name: videoInfo.author.name,
@@ -113,8 +113,8 @@ module.exports = {
     }
 
     // Connects the Bot and Start the Player if Queue is Empty
-    if (interaction.client.musicQueue.length === 0) {
-      playMusic(interaction.client.voicePlayer, addedSongs[0]);
+    if (interaction.client.music.queue.length === 0) {
+      playMusic(interaction.client.music.player, addedSongs[0]);
 
       const connection = joinVoiceChannel({
         guildId: interaction.guild.id,
@@ -123,13 +123,13 @@ module.exports = {
           interaction.member.voice.channel.guild.voiceAdapterCreator,
       });
 
-      connection.subscribe(interaction.client.voicePlayer);
+      connection.subscribe(interaction.client.music.player);
 
       if (embed.data.fields != null)
         embed.data.fields[0].name += " (Currently Playing)";
     }
 
-    interaction.client.musicQueue.push(...addedSongs);
+    interaction.client.music.queue.push(...addedSongs);
 
     await interaction.editReply({ embeds: [embed] });
   },

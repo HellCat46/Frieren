@@ -5,12 +5,15 @@ import { Pool } from "pg";
 
 declare module "discord.js" {
   export interface Client {
-    genAI : GoogleGenerativeAI;
+    genAI: GoogleGenerativeAI;
     commands: Collection<any, any>;
     buttons: Collection<any, any>;
-    musicQueue : Music[];
-    voicePlayer : AudioPlayer;
-    dbPool : Pool;
+    music: {
+      loop: boolean;
+      queue: Music[];
+      player: AudioPlayer;
+    };
+    dbPool: Pool;
     Topics: Collection<
       number,
       {
@@ -24,14 +27,14 @@ declare module "discord.js" {
 }
 
 interface Music {
-  title : string;
-  url : string;
+  title: string;
+  url: string;
   thumbnail: string | undefined;
-  length : number;
-  author :{
-    name : string;
-    url : string;
+  length: number;
+  author: {
+    name: string;
+    url: string;
   };
   channel: string;
-  guild : string
+  guild: string;
 }

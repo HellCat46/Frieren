@@ -93,25 +93,29 @@ for (const file of eventFiles) {
 }
 
 // Initilize Components Related to Voice
-client.musicQueue = [];
-client.voicePlayer = createAudioPlayer();
-client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
+client.music = {
+  loop: false,
+  player: createAudioPlayer(),
+  queue : []
+};
+client.music.player.on(AudioPlayerStatus.Idle, async () => {
   try {
-    // Removes the song that was last playing
-    const guildId = client.musicQueue.shift()?.guild;
-
-    if (client.musicQueue.length == 0) {
-      stopMusic(client, guildId);
-      return;
+    if(client.music.loop != true){
+      // Removes the song that was last playing
+      const guildId = client.music.queue.shift()?.guild;
+      if (client.music.queue.length == 0) {
+        stopMusic(client, guildId);
+        return;
+      }
     }
 
-    const music = client.musicQueue[0];
+    const music = client.music.queue[0];
 
     // Channel where song was request.
     const guild = await client.guilds.fetch(music.guild);
     const channel = await client.channels.fetch(music.channel);
 
-    playMusic(client.voicePlayer, music);
+    playMusic(client.music.player, music);
 
     // Notifies user about new song playing
     if (
@@ -123,15 +127,15 @@ client.voicePlayer.on(AudioPlayerStatus.Idle, async () => {
           new EmbedBuilder()
             .setTitle(`Now Playing: ${music.title}`)
             .setDescription(
-              `Now Queue has ${client.musicQueue.length - 1} song('s) left.`
+              `Now Queue has ${client.music.queue.length - 1} song('s) left.`
             )
             .setColor("Green"),
         ],
       });
-    
+
     client.user?.setActivity({
-          name: music.title,
-          type: ActivityType.Playing,
+      name: music.title,
+      type: ActivityType.Playing,
     });
   } catch (ex) {
     console.error(ex);
