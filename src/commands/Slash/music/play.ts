@@ -210,7 +210,7 @@ module.exports = {
     await interaction.editReply({
       embeds: [infoEmbed],
       components: []
-    })
+    });
     if (res == null) return;
     await collPlaylistBtn(videoId, interaction, res);
   },

@@ -1,18 +1,18 @@
-import { Events, Interaction } from "discord.js";
+import { Client, Events, Interaction } from "discord.js";
 import { embedError } from "../components/EmbedTemplate";
 module.exports = {
   name: Events.InteractionCreate,
   once: false,
-  async execute(interaction: Interaction) {
+  async execute(client: Client,interaction: Interaction) {
     if (interaction.isAutocomplete()) return;
     try {
       if (interaction.isButton()) {
         const topicId = +interaction.customId.split(".")[0]; // Parses Topic Id from customId of Button
-        const topic = interaction.client.Topics.get(topicId);
+        const topic = client.Topics.get(topicId);
         if (!topic) return; // If topic with the id exist or not
 
         const embed = interaction.message.embeds[0]; // The main embed shown to user
-        const button = interaction.client.buttons.get(
+        const button = client.buttons.get(
           interaction.customId.split(".")[1]
         );
         if (!button) return;
@@ -29,7 +29,7 @@ module.exports = {
           },
         });
       } else if (interaction.isChatInputCommand()) {
-        const command = interaction.client.commands.get(
+        const command = client.commands.get(
           interaction.commandName
         );
         if (!command) return;
