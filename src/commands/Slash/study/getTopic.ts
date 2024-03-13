@@ -12,6 +12,7 @@ import {
 } from "discord.js";
 import { embedError, embedTopic } from "../../../components/EmbedTemplate";
 import { getPageLink } from "../../../components/Requests";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,12 +21,12 @@ module.exports = {
     .addIntegerOption((options) =>
       options.setName("id").setDescription("ID of the Topic")
     ),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     let id = interaction.options.getInteger("id");
 
     if (id != null) {
-      await Response(interaction, id);
+      await Response(client, interaction, id);
       return;
     }
 
@@ -33,7 +34,7 @@ module.exports = {
       .setCustomId("topicSelection")
       .setPlaceholder("Select one of these topics");
 
-    for (const topic of interaction.client.Topics) {
+    for (const topic of client.Topics) {
       selection.options.push(
         new StringSelectMenuOptionBuilder()
           .setValue(`${topic[0]}`)
@@ -64,10 +65,7 @@ module.exports = {
         time: 120000,
         componentType: ComponentType.StringSelect,
       })
-      .then(
-        async (i) =>
-          await i.update(await Response(i, +i.values[0]))
-      )
+      .then(async (i) => await i.update(await Response(client, i, +i.values[0])))
       .catch(
         async () =>
           await interaction.editReply({
@@ -85,10 +83,11 @@ module.exports = {
 // So when A interaction is created by selection menu and doesn't get any response, the new component at same location as selection
 // Will have loading animation and interaction Failed Message
 async function Response(
+  client : Frieren,
   interaction: Interaction,
   id: number
 ): Promise<MessageEditOptions> {
-  const topic = interaction.client.Topics.get(id);
+  const topic = client.Topics.get(id);
   if (!topic) {
     return {
       embeds: [embedError("No Topic Exists with this id")],
@@ -102,7 +101,7 @@ async function Response(
     };
   }
 
-  const path = await getPageLink(interaction.client.dbPool, id, 1);
+  const path = await getPageLink(client.dbPool, id, 1);
 
   if (path instanceof Error) {
     return {

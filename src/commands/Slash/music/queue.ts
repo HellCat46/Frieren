@@ -4,15 +4,16 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import { secondsToString } from "../../../components/musicPlayer";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("queue")
     .setDescription("Get Queue of Music"),
-    
-  async execute(interaction: ChatInputCommandInteraction) {
+
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
-    const musicQueue = interaction.client.music.queue;
+    const musicQueue = client.music.queue;
 
     // If Nothing is playing
     if (musicQueue.length === 0) {

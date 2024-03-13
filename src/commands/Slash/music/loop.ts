@@ -4,12 +4,13 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { isInVoice } from "../../../components/musicPlayer";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("loop")
     .setDescription("Make Music Player Loop over same song"),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     // Checks for user being in same channel as Bot
@@ -19,8 +20,8 @@ module.exports = {
       return;
     }
 
-    if (interaction.client.music.loop == true) {
-      interaction.client.music.loop = false;
+    if (client.music.loop == true) {
+      client.music.loop = false;
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -31,7 +32,7 @@ module.exports = {
         ],
       });
     } else {
-      interaction.client.music.loop = true;
+      client.music.loop = true;
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

@@ -11,9 +11,10 @@ import { embedError } from "../../components/EmbedTemplate";
 import { changeStatus, deleteTopic } from "../../components/Requests";
 import { topicStatus } from "../../shared.types";
 import { Params } from "./button.types";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     await params.interaction.deferReply({ ephemeral: true });
     if (!params.interaction.memberPermissions?.has("Administrator")) {
       await params.interaction.editReply({
@@ -95,7 +96,7 @@ module.exports = {
           }
 
           const result = await changeStatus(
-            click.client.dbPool,
+            client.dbPool,
             params.topic.id,
             topicStatus.Open
           );
@@ -105,7 +106,7 @@ module.exports = {
             });
             return;
           }
-          click.client.Topics.set(params.topic.id, {
+          client.Topics.set(params.topic.id, {
             name: params.topic.name,
             page_count: params.topic.page_count,
             status: topicStatus.Open,
@@ -124,7 +125,7 @@ module.exports = {
           }
 
           const result = await changeStatus(
-            click.client.dbPool,
+          client.dbPool,
             params.topic.id,
             topicStatus.Closed
           );
@@ -134,7 +135,7 @@ module.exports = {
             });
             return;
           }
-          click.client.Topics.set(params.topic.id, {
+          client.Topics.set(params.topic.id, {
             name: params.topic.name,
             page_count: params.topic.page_count,
             status: topicStatus.Closed,
@@ -146,7 +147,7 @@ module.exports = {
       case "archive":
         {
           const result = await changeStatus(
-            click.client.dbPool,
+            client.dbPool,
             params.topic.id,
             topicStatus.Archived
           );
@@ -156,7 +157,7 @@ module.exports = {
             });
             return;
           }
-          click.client.Topics.set(params.topic.id, {
+          client.Topics.set(params.topic.id, {
             name: params.topic.name,
             page_count: params.topic.page_count,
             status: topicStatus.Archived,
@@ -180,7 +181,7 @@ module.exports = {
       case "delete":
         {
           const result = await deleteTopic(
-            click.client.dbPool,
+            client.dbPool,
             params.topic.id
           );
           if (result instanceof Error) {
@@ -189,7 +190,7 @@ module.exports = {
             });
             return;
           }
-          click.client.Topics.delete(params.topic.id);
+          client.Topics.delete(params.topic.id);
           click.editReply("Successfully Deleted the Topic.");
           params.interaction.message.delete();
         }

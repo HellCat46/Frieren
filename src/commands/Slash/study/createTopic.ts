@@ -9,6 +9,7 @@ import {
 import { createTopic, getPageLink } from "../../../components/Requests";
 import { embedError, embedTopic } from "../../../components/EmbedTemplate";
 import { topicStatus } from "../../../shared.types";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,7 +28,7 @@ module.exports = {
         .setDescription("First Page of Notes")
         .setRequired(false)
     ),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const topicName = interaction.options.getString("name", true);
@@ -35,12 +36,12 @@ module.exports = {
     let res: number | Error;
 
     if (!page) {
-      res = await createTopic(interaction.client.dbPool, topicName);
+      res = await createTopic(client.dbPool, topicName);
       if (res instanceof Error) {
         await interaction.editReply({ embeds: [embedError(res.message)] });
       } else {
         const message = embedTopic({ id: res, topicName });
-        interaction.options.client.Topics.set(res, {
+        client.Topics.set(res, {
           name: topicName,
           page_count: 0,
           status: topicStatus.Open,
@@ -56,17 +57,13 @@ module.exports = {
     }
 
     console.log(page.url);
-    res = await createTopic(interaction.client.dbPool, topicName, page.url);
+    res = await createTopic(client.dbPool, topicName, page.url);
     if (res instanceof Error) {
       await interaction.editReply({ embeds: [embedError(res.message)] });
       return;
     }
 
-    const path = await getPageLink(
-      interaction.client.dbPool,
-      res,
-      1
-    );
+    const path = await getPageLink(client.dbPool, res, 1);
     if (path instanceof Error) {
       await interaction.editReply({
         embeds: [embedError(path.message)],
@@ -81,7 +78,7 @@ module.exports = {
       footer: "1 of 1",
       pageurl: `attachment://${path.split("/").at(-1)}`,
     });
-    interaction.options.client.Topics.set(res, {
+    client.Topics.set(res, {
       name: topicName,
       page_count: 1,
       status: topicStatus.Open,
@@ -91,7 +88,7 @@ module.exports = {
     await interaction.editReply({
       embeds: [message.embed],
       components: message.rows,
-      files : [file]
+      files: [file],
     });
   },
 };

@@ -2,9 +2,10 @@ import { AttachmentBuilder, EmbedBuilder } from "discord.js";
 import { embedError } from "../../components/EmbedTemplate";
 import { getPageLink } from "../../components/Requests";
 import { Params } from "./button.types";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     if (!params.embed.footer) {
       await params.interaction.reply({
         embeds: [embedError("No pages")],
@@ -22,7 +23,7 @@ module.exports = {
     }
 
     const path = await getPageLink(
-      params.interaction.client.dbPool,
+      client.dbPool,
       params.topic.id,
       pageno
     );
@@ -43,7 +44,7 @@ module.exports = {
     await params.interaction.update({
       embeds: [embed],
       components: params.interaction.message.components,
-      files: [file]
+      files: [file],
     });
   },
 };

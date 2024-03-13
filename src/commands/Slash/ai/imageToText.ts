@@ -7,6 +7,7 @@ import {
   SlashCommandAttachmentOption,
 } from "discord.js";
 import { embedError } from "../../../components/EmbedTemplate";
+import { Frieren } from "../../../Frieren";
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("imgtotext")
@@ -23,7 +24,7 @@ module.exports = {
         .setDescription("Additional Instructions for AI")
         .setRequired(false)
     ),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const img = interaction.options.getAttachment("img", true);
@@ -44,7 +45,7 @@ module.exports = {
         },
       };
 
-      const model = interaction.client.genAI.getGenerativeModel({
+      const model = client.genAI.getGenerativeModel({
         model: img !== null ? "gemini-pro-vision" : "gemini-1.0-pro",
       });
       const result = await model.generateContentStream([
@@ -65,11 +66,10 @@ module.exports = {
       }
     } catch (ex) {
       if (ex instanceof Error) {
-        await interaction.editReply({embeds: [embedError(ex.message)]});
+        await interaction.editReply({ embeds: [embedError(ex.message)] });
         return;
       } else throw ex;
     }
-
 
     await interaction.editReply({
       content: "",

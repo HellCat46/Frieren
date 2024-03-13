@@ -4,11 +4,12 @@ import {
   Client,
   EmbedBuilder,
 } from "discord.js";
+import { Frieren } from "../Frieren";
 
 module.exports = {
   name: Events.VoiceStateUpdate,
   once: false,
-  async execute(client: Client, oldState: VoiceState, newState: VoiceState) {
+  async execute(client: Frieren, oldState: VoiceState, newState: VoiceState) {
     try {
       if (client.user?.id === newState.id && client.music.queue.length !== 0) {
         const music = client.music.queue[0];

@@ -13,8 +13,9 @@ import {
 import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import yts from "yt-search";
-import { Music } from "../../../@types/discord";
+import { Music } from "../../../shared.types";
 import { addToPlaylist, playMusic, removeToPlaylist, secondsToString } from "../../../components/musicPlayer";
+import { Frieren } from "../../../Frieren";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -30,7 +31,7 @@ module.exports = {
         .setRequired(true)
     ),
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const input = interaction.options.getString("input", true);
@@ -132,24 +133,24 @@ module.exports = {
       );
 
     // Add Song to Queue
-    if (interaction.client.music.queue.length > 0) {
+    if (client.music.queue.length > 0) {
       const notifEmbed = new EmbedBuilder()
         .setColor("Yellow")
         .setTitle("Succesfully added in the queue");
 
-      if (interaction.client.music.queue.length == 1)
+      if (client.music.queue.length == 1)
         notifEmbed.setDescription(
           "This song will be played next after the current one."
         );
       else
         notifEmbed.setDescription(
           `This song will be played after ${
-            interaction.client.music.queue.length - 1
+            client.music.queue.length - 1
           } songs that are already in list`
         );
 
-      interaction.client.music.queue.push(music);
-      const res = await(
+      client.music.queue.push(music);
+      const res = await (
         await interaction.editReply({
           embeds: [infoEmbed, notifEmbed],
           components: [playlistBtns],
@@ -170,11 +171,11 @@ module.exports = {
       });
 
       if (res == null) return;
-      await collPlaylistBtn(videoId, interaction, res);
+      await collPlaylistBtn(client, interaction, videoId,res);
       return;
     }
 
-    playMusic(interaction.client.music.player, music);
+    playMusic(client.music.player, music);
 
     // Joins Voice Channel to Create an Connection
     const connection = joinVoiceChannel({
@@ -183,11 +184,11 @@ module.exports = {
       adapterCreator:
         interaction.member.voice.channel.guild.voiceAdapterCreator,
     });
-    connection.subscribe(interaction.client.music.player);
+    connection.subscribe(client.music.player);
 
-    interaction.client.music.queue.push(music);
+    client.music.queue.push(music);
 
-    interaction.client.user?.setActivity({
+    client.user?.setActivity({
       name: music.title,
       type: ActivityType.Playing,
     });
@@ -201,7 +202,7 @@ module.exports = {
       .awaitMessageComponent({
         // Collector to Collect Playlist buttons
         filter: (i) => i.user.id === interaction.user.id,
-        time: music.length*1000,
+        time: music.length * 1000,
         componentType: ComponentType.Button,
       })
       .then((i) => i.customId)
@@ -209,54 +210,70 @@ module.exports = {
 
     await interaction.editReply({
       embeds: [infoEmbed],
-      components: []
+      components: [],
     });
     if (res == null) return;
-    await collPlaylistBtn(videoId, interaction, res);
+    await collPlaylistBtn(client, interaction,videoId, res);
   },
 };
 
-async function collPlaylistBtn(videoId: string, interaction: ChatInputCommandInteraction, customId: string) {
+async function collPlaylistBtn(
+  client: Frieren,
+  interaction: ChatInputCommandInteraction,
+  videoId: string,
+  customId: string
+) {
   try {
-  if(customId == "addToPlay"){
-    const res = await addToPlaylist(interaction.client.dbPool, interaction.user.id, videoId);  
+    if (customId == "addToPlay") {
+      const res = await addToPlaylist(
+        client.dbPool,
+        interaction.user.id,
+        videoId
+      );
 
-    if(res instanceof Error){
+      if (res instanceof Error) {
+        await interaction.followUp({
+          embeds: [embedError(res.message)],
+          ephemeral: true,
+        });
+        return;
+      }
       await interaction.followUp({
-        embeds: [embedError(res.message)],
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Green")
+            .setTitle("Succesfully Added the Song to your playlist."),
+        ],
         ephemeral: true,
       });
-      return
-    }
-    await interaction.followUp({
-      embeds: [
-        new EmbedBuilder()
-          .setColor("Green")
-          .setTitle("Succesfully Added the Song to your playlist."),
-      ],
-      ephemeral: true,
-    });
-  }else {
-    const res = await removeToPlaylist(interaction.client.dbPool, interaction.user.id, videoId);
+    } else {
+      const res = await removeToPlaylist(
+        client.dbPool,
+        interaction.user.id,
+        videoId
+      );
 
-    if (res instanceof Error) {
+      if (res instanceof Error) {
+        await interaction.followUp({
+          embeds: [embedError(res.message)],
+          ephemeral: true,
+        });
+        return;
+      }
       await interaction.followUp({
-        embeds: [embedError(res.message)],
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setTitle("Succesfully Removed the Song from your playlist."),
+        ],
         ephemeral: true,
       });
-      return;
     }
+  } catch (ex) {
     await interaction.followUp({
-      embeds: [
-        new EmbedBuilder()
-          .setColor("Red")
-          .setTitle("Succesfully Removed the Song from your playlist."),
-      ],
+      embeds: [embedError("Failed to Make Changes to Database.")],
       ephemeral: true,
     });
-  }
-  }catch(ex){
-    await interaction.followUp({embeds: [embedError("Failed to Make Changes to Database.")], ephemeral: true});
     console.log(ex);
   }
 }

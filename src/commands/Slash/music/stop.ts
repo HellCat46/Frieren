@@ -10,13 +10,14 @@ import {
 import { isInVoice, stopMusic } from "../../../components/musicPlayer";
 import { embedError } from "../../../components/EmbedTemplate";
 import { getVoiceConnection } from "@discordjs/voice";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("stop")
     .setDescription("Stops Anything playing and disconnects the bot."),
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     // Checks for user being in same channel as Bot
@@ -76,7 +77,11 @@ module.exports = {
       .catch(() => null);
 
     if (res == null) {
-      await interaction.editReply({content: "Timer Ended.", components: [], embeds: []});
+      await interaction.editReply({
+        content: "Timer Ended.",
+        components: [],
+        embeds: [],
+      });
       return;
     }
 
@@ -87,12 +92,12 @@ module.exports = {
             .setTitle("User cancel the operation.")
             .setTimestamp(),
         ],
-        components: []
+        components: [],
       });
       return;
     }
 
-    stopMusic(interaction.client, interaction.guildId);
+    stopMusic(client, interaction.guildId);
 
     await interaction.editReply({
       embeds: [
@@ -104,7 +109,7 @@ module.exports = {
           .setTimestamp()
           .setFooter({ text: `Request By: ${interaction.user.username}` }),
       ],
-      components: []
+      components: [],
     });
   },
 };

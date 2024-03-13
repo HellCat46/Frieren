@@ -9,15 +9,16 @@ import {
   playMusic,
   stopMusic,
 } from "../../../components/musicPlayer";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("skip")
     .setDescription("Skips the currently playing song"),
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
-    const musicQueue = interaction.client.music.queue;
+    const musicQueue = client.music.queue;
 
     // Checks for user being in same channel as Bot
     const isUsingVoice = isInVoice(interaction);
@@ -45,7 +46,7 @@ module.exports = {
 
     // Stops the player completely if there no more songs in queue
     if (musicQueue.length === 0) {
-      stopMusic(interaction.client, interaction.guildId);
+      stopMusic(client, interaction.guildId);
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -64,7 +65,7 @@ module.exports = {
 
     // Fetches Audio from Youtube
     const music = musicQueue[0];
-    playMusic(interaction.client.music.player, music);
+    playMusic(client.music.player, music);
 
     const embed = new EmbedBuilder()
       .setTitle("Successfully Skipped the Song")

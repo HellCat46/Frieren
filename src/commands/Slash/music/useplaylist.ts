@@ -12,14 +12,15 @@ import {
 } from "../../../components/musicPlayer";
 import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
-import { Music } from "../../../@types/discord";
 import { joinVoiceChannel } from "@discordjs/voice";
+import { Frieren } from "../../../Frieren";
+import { Music } from "../../../shared.types";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("useplaylist")
     .setDescription("Adds your whole playlist to the Music Queue"),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     {
@@ -59,7 +60,7 @@ module.exports = {
 
     // Songs in User Playlist
     const songs = await getPlaylist(
-      interaction.client.dbPool,
+      client.dbPool,
       interaction.user.id
     );
     if (songs instanceof Error) {
@@ -113,8 +114,8 @@ module.exports = {
     }
 
     // Connects the Bot and Start the Player if Queue is Empty
-    if (interaction.client.music.queue.length === 0) {
-      playMusic(interaction.client.music.player, addedSongs[0]);
+    if (client.music.queue.length === 0) {
+      playMusic(client.music.player, addedSongs[0]);
 
       const connection = joinVoiceChannel({
         guildId: interaction.guild.id,
@@ -123,13 +124,13 @@ module.exports = {
           interaction.member.voice.channel.guild.voiceAdapterCreator,
       });
 
-      connection.subscribe(interaction.client.music.player);
+      connection.subscribe(client.music.player);
 
       if (embed.data.fields != null)
         embed.data.fields[0].name += " (Currently Playing)";
     }
 
-    interaction.client.music.queue.push(...addedSongs);
+    client.music.queue.push(...addedSongs);
 
     await interaction.editReply({ embeds: [embed] });
   },

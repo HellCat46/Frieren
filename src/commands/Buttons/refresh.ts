@@ -2,14 +2,15 @@ import { AttachmentBuilder } from "discord.js";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { getPageLink } from "../../components/Requests";
 import { Params } from "./button.types";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     await params.interaction.deferReply({ ephemeral: true });
     if (params.embed.footer && params.topic.page_count > 0) {
       const current_page = +params.embed.footer.text.split(" ")[0];
       const path = await getPageLink(
-        params.interaction.client.dbPool,
+        client.dbPool,
         params.topic.id,
         current_page
       );
@@ -32,7 +33,7 @@ module.exports = {
       });
     } else if (params.topic.page_count > 0) {
       const path = await getPageLink(
-        params.interaction.client.dbPool,
+        client.dbPool,
         params.topic.id,
         1
       );
@@ -52,7 +53,7 @@ module.exports = {
       await params.interaction.message.edit({
         embeds: [msg.embed],
         components: msg.rows,
-        files : [new AttachmentBuilder(path)]
+        files: [new AttachmentBuilder(path)],
       });
     } else {
       const message = embedTopic({

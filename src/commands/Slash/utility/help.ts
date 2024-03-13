@@ -7,12 +7,13 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("help")
     .setDescription("Show List of Commands"),
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     const ai = new EmbedBuilder()
@@ -161,11 +162,12 @@ module.exports = {
       if (i.values[0] === "aicomm") await i.update({ embeds: [ai] });
       else if (i.values[0] === "musiccomm") await i.update({ embeds: [music] });
       else if (i.values[0] === "studycomm") await i.update({ embeds: [study] });
-      else if (i.values[0] === "utilcomm") await i.update({ embeds: [utility] });
+      else if (i.values[0] === "utilcomm")
+        await i.update({ embeds: [utility] });
     });
     collector.on("end", async () => {
-        selection.components[0].setDisabled(true);
-        await interaction.editReply({ components: [selection] });
+      selection.components[0].setDisabled(true);
+      await interaction.editReply({ components: [selection] });
     });
   },
 };

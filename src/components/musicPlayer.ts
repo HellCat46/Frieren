@@ -4,7 +4,6 @@ import {
   getVoiceConnection,
 } from "@discordjs/voice";
 import ytdl from "ytdl-core";
-import { Music } from "../@types/discord";
 import {
   ChatInputCommandInteraction,
   Client,
@@ -13,6 +12,8 @@ import {
   GuildMember,
 } from "discord.js";
 import { Pool } from "pg";
+import { Frieren } from "../Frieren";
+import { Music } from "../shared.types";
 
 export function secondsToString(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -33,7 +34,7 @@ export function playMusic(voicePlayer: AudioPlayer, music: Music) {
   voicePlayer.play(resource);
 }
 
-export function stopMusic(client: Client, guildId: string | undefined | null) {
+export function stopMusic(client: Frieren, guildId: string | undefined | null) {
   client.music.queue = [];
   client.music.player.stop(true);
 

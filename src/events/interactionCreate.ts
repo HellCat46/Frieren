@@ -1,9 +1,10 @@
 import { Client, Events, Interaction } from "discord.js";
 import { embedError } from "../components/EmbedTemplate";
+import { Frieren } from "../Frieren";
 module.exports = {
   name: Events.InteractionCreate,
   once: false,
-  async execute(client: Client,interaction: Interaction) {
+  async execute(client: Frieren,interaction: Interaction) {
     if (interaction.isAutocomplete()) return;
     try {
       if (interaction.isButton()) {
@@ -17,7 +18,7 @@ module.exports = {
         );
         if (!button) return;
         
-        await button.execute({
+        await button.execute(client, {
           interaction,
           embed,
           topic: {
@@ -33,7 +34,7 @@ module.exports = {
           interaction.commandName
         );
         if (!command) return;
-        await command.execute(interaction);
+        await command.execute(client, interaction);
       }
     } catch (error) {
       console.error(error);

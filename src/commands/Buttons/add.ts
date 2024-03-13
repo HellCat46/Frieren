@@ -4,15 +4,16 @@ import { embedError } from "../../components/EmbedTemplate";
 import { addPage, getPageLink } from "../../components/Requests";
 import { randomInt } from "crypto";
 import { topicStatus } from "../../shared.types";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     if (!params.interaction.memberPermissions?.has("ManageMessages")) {
       await params.interaction.reply({
         embeds: [
           embedError("You don't have permission to perform this action."),
         ],
-        ephemeral : true
+        ephemeral: true,
       });
       return;
     }
@@ -54,7 +55,7 @@ module.exports = {
 
       for (const attachment of msg.attachments) {
         const res = await addPage(
-          params.interaction.client.dbPool,
+          client.dbPool,
           params.topic.id,
           attachment[1].url
         );
@@ -79,18 +80,14 @@ module.exports = {
       });
       if (items.size <= 1) return;
 
-      params.interaction.client.Topics.set(params.topic.id, {
+      client.Topics.set(params.topic.id, {
         name: params.topic.name,
         page_count: count,
         status: params.topic.status,
         archive_link: params.topic.archive_link,
       });
 
-      const path = await getPageLink(
-        params.interaction.client.dbPool,
-        params.topic.id,
-        1
-      );
+      const path = await getPageLink(client.dbPool, params.topic.id, 1);
       if (path instanceof Error) {
         await params.interaction.editReply({
           embeds: [embedError(path.message)],
@@ -107,7 +104,7 @@ module.exports = {
             }),
         ],
         components: params.interaction.message.components,
-        files : [new AttachmentBuilder(path)]
+        files: [new AttachmentBuilder(path)],
       });
     });
   },

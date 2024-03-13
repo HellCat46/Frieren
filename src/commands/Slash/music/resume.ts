@@ -5,13 +5,14 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { isInVoice } from "../../../components/musicPlayer";
+import { Frieren } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("resume")
     .setDescription("Resumes the paused music"),
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     // if (interaction.client.musicQueue.length === 0) {
@@ -38,8 +39,8 @@ module.exports = {
 
     // The Queue wouldn't be empty if the interpreter reached here
     // Why? Because Bot will disconnect from the VC as soon as last song has ended/skipped/stopped.
-    if (interaction.client.music.player.unpause()){
-      const music = interaction.client.music.queue[0];
+    if (client.music.player.unpause()) {
+      const music = client.music.queue[0];
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -54,12 +55,10 @@ module.exports = {
       });
 
       interaction.client.user?.setActivity({
-            name: music.title,
-            type: ActivityType.Playing,
-        
+        name: music.title,
+        type: ActivityType.Playing,
       });
-    }
-    else
+    } else
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

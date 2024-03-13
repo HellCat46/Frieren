@@ -4,9 +4,10 @@ import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { getPageLink } from "../../components/Requests";
 import { topicStatus } from "../../shared.types";
 import { rotateImage } from "../../components/ManageFiles";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     if (!params.interaction.memberPermissions?.has("ManageMessages")) {
       await params.interaction.reply({
         embeds: [
@@ -38,7 +39,7 @@ module.exports = {
 
     const activePage = +params.embed.footer.text.split(" ")[0];
     const path = await getPageLink(
-      params.interaction.client.dbPool,
+      client.dbPool,
       params.topic.id,
       activePage
     );

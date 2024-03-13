@@ -9,9 +9,10 @@ import {
 import { embedError } from "../../components/EmbedTemplate";
 import { Params } from "./button.types";
 import { getPageLink } from "../../components/Requests";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     if (!params.interaction.channel) return;
 
     if (!params.embed.footer) {
@@ -44,7 +45,6 @@ module.exports = {
 
     if (submitted instanceof Error) return;
 
-
     await submitted.deferReply({ ephemeral: true });
     const pageno = +submitted.fields.getTextInputValue("pageno");
     if (!pageno) {
@@ -56,13 +56,13 @@ module.exports = {
       await submitted.editReply({
         embeds: [
           embedError(`Out of Page Range (1-${params.topic.page_count})`),
-        ]
+        ],
       });
       return;
     }
 
     const path = await getPageLink(
-      params.interaction.client.dbPool,
+      client.dbPool,
       params.topic.id,
       pageno
     );
@@ -83,7 +83,7 @@ module.exports = {
     await params.interaction.message.edit({
       embeds: [embed],
       components: params.interaction.message.components,
-      files: [new AttachmentBuilder(path)]
+      files: [new AttachmentBuilder(path)],
     });
   },
 };

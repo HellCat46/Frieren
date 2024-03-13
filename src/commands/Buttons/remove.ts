@@ -10,15 +10,16 @@ import { embedError } from "../../components/EmbedTemplate";
 import { Params } from "./button.types";
 import { getPageLink, removePage } from "../../components/Requests";
 import { topicStatus } from "../../shared.types";
+import { Frieren } from "../../Frieren";
 
 module.exports = {
-  async execute(params: Params) {
+  async execute(client: Frieren, params: Params) {
     if (!params.interaction.memberPermissions?.has("ManageMessages")) {
       await params.interaction.reply({
         embeds: [
           embedError("You don't have permission to perform this action."),
         ],
-        ephemeral : true
+        ephemeral: true,
       });
       return;
     }
@@ -86,7 +87,7 @@ module.exports = {
 
     const pageno = params.embed.footer.text.split(" ")[0];
     const res = await removePage(
-      params.interaction.client.dbPool,
+      client.dbPool,
       params.topic.id,
       pageno
     );
@@ -99,7 +100,7 @@ module.exports = {
     }
 
     params.topic.page_count--;
-    params.interaction.client.Topics.set(params.topic.id, {
+    client.Topics.set(params.topic.id, {
       name: params.topic.name,
       page_count: params.topic.page_count,
       status: params.topic.status,
@@ -117,7 +118,7 @@ module.exports = {
     }
 
     const path = await getPageLink(
-      params.interaction.client.dbPool,
+      client.dbPool,
       params.topic.id,
       +pageno
     );
@@ -138,7 +139,7 @@ module.exports = {
           }),
       ],
       components: params.interaction.message.components,
-      files: [new AttachmentBuilder(path)]
+      files: [new AttachmentBuilder(path)],
     });
   },
 };
