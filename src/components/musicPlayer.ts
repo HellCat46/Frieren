@@ -12,8 +12,7 @@ import {
   GuildMember,
 } from "discord.js";
 import { Pool } from "pg";
-import { Frieren } from "../Frieren";
-import { Music } from "../shared.types";
+import { Frieren, Music } from "../Frieren";
 
 export function secondsToString(seconds: number) {
   const minutes = Math.floor(seconds / 60);

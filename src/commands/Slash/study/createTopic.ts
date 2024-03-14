@@ -8,8 +8,7 @@ import {
 } from "discord.js";
 import { createTopic, getPageLink } from "../../../components/Requests";
 import { embedError, embedTopic } from "../../../components/EmbedTemplate";
-import { topicStatus } from "../../../shared.types";
-import { Frieren } from "../../../Frieren";
+import { Frieren, topicStatus } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -56,7 +55,7 @@ module.exports = {
       return;
     }
 
-    console.log(page.url);
+    // console.log(page.url);
     res = await createTopic(client.dbPool, topicName, page.url);
     if (res instanceof Error) {
       await interaction.editReply({ embeds: [embedError(res.message)] });

@@ -9,9 +9,8 @@ import {
 } from "discord.js";
 import { embedError } from "../../components/EmbedTemplate";
 import { changeStatus, deleteTopic } from "../../components/Requests";
-import { topicStatus } from "../../shared.types";
 import { Params } from "./button.types";
-import { Frieren } from "../../Frieren";
+import { Frieren, topicStatus } from "../../Frieren";
 
 module.exports = {
   async execute(client: Frieren, params: Params) {

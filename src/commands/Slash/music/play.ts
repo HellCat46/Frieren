@@ -13,9 +13,8 @@ import {
 import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import yts from "yt-search";
-import { Music } from "../../../shared.types";
 import { addToPlaylist, playMusic, removeToPlaylist, secondsToString } from "../../../components/musicPlayer";
-import { Frieren } from "../../../Frieren";
+import { Frieren, Music, topicStatus } from "../../../Frieren";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -274,6 +273,6 @@ async function collPlaylistBtn(
       embeds: [embedError("Failed to Make Changes to Database.")],
       ephemeral: true,
     });
-    console.log(ex);
+    console.error(ex);
   }
 }

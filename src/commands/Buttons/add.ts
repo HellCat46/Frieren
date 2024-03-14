@@ -3,8 +3,7 @@ import { Params } from "./button.types";
 import { embedError } from "../../components/EmbedTemplate";
 import { addPage, getPageLink } from "../../components/Requests";
 import { randomInt } from "crypto";
-import { topicStatus } from "../../shared.types";
-import { Frieren } from "../../Frieren";
+import { Frieren, topicStatus } from "../../Frieren";
 
 module.exports = {
   async execute(client: Frieren, params: Params) {

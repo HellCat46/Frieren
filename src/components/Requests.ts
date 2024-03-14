@@ -1,7 +1,7 @@
 import { Collection } from "discord.js";
-import { topicStatus } from "../shared.types";
 import { Pool } from "pg";
 import { archivefolder, createArchive, createTopicFolder, deletePage, deleteTopicFolder, notesfolder, saveFile } from "./ManageFiles";
+import { TopicData, topicStatus } from "../Frieren";
 
 const status = ["Open", "Closed", "Archived"];
 
@@ -69,7 +69,6 @@ export async function addPage(
     const result = await saveFile(topicId, records.rows[0]._pagePaths, pageurl);
     if (result instanceof Error) throw result;
 
-    console.log(result);
     const updates = await pool.query(
       `UPDATE public.topic SET "_pagePaths" = array_append(topic."_pagePaths", '${result}') WHERE topic._id = ${topicId} RETURNING ARRAY_LENGTH(topic."_pagePaths", 1);`
     );
@@ -221,12 +220,7 @@ export async function getTopics(
 
   let collection: Collection<
     number,
-    {
-      name: string;
-      page_count: number;
-      status: topicStatus;
-      archive_link: string | null;
-    }
+    TopicData
   > = new Collection();
 
   for (let idx = 0; idx < list.length; idx++) {

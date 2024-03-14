@@ -2,9 +2,8 @@ import { AttachmentBuilder } from "discord.js";
 import { Params } from "./button.types";
 import { embedError, embedTopic } from "../../components/EmbedTemplate";
 import { getPageLink } from "../../components/Requests";
-import { topicStatus } from "../../shared.types";
 import { rotateImage } from "../../components/ManageFiles";
-import { Frieren } from "../../Frieren";
+import { Frieren, topicStatus } from "../../Frieren";
 
 module.exports = {
   async execute(client: Frieren, params: Params) {

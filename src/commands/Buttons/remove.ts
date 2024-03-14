@@ -9,8 +9,7 @@ import {
 import { embedError } from "../../components/EmbedTemplate";
 import { Params } from "./button.types";
 import { getPageLink, removePage } from "../../components/Requests";
-import { topicStatus } from "../../shared.types";
-import { Frieren } from "../../Frieren";
+import { Frieren, topicStatus } from "../../Frieren";
 
 module.exports = {
   async execute(client: Frieren, params: Params) {

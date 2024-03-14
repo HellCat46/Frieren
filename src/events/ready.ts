@@ -1,4 +1,4 @@
-import { Events, Client } from "discord.js";
+import { Events } from "discord.js";
 import { getTopics } from "../components/Requests";
 import { Frieren } from "../Frieren";
 
@@ -7,6 +7,6 @@ module.exports = {
   once: true,
   async execute(client: Frieren) {
     client.Topics = await getTopics(client.dbPool);
-    console.log("Logged in as " + client.user?.tag);
+    console.log("\x1b[36m"+"Logged in as " + client.user?.tag);
   },
 };

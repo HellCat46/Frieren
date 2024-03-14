@@ -1,5 +1,5 @@
 import { ButtonInteraction, Embed } from "discord.js";
-import { topicStatus } from "../../shared.types";
+import { topicStatus } from "../../Frieren";
 
 export interface Params {
   interaction: ButtonInteraction;

@@ -13,8 +13,7 @@ import {
 import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import { joinVoiceChannel } from "@discordjs/voice";
-import { Frieren } from "../../../Frieren";
-import { Music } from "../../../shared.types";
+import { Frieren, Music } from "../../../Frieren";
 
 module.exports = {
   data: new SlashCommandBuilder()
