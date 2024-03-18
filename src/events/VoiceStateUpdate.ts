@@ -24,7 +24,7 @@ module.exports = {
                 new EmbedBuilder()
                   .setTitle("Successfully Paused the Music Player")
                   .setDescription(
-                    `The Song [${music.title}](${music.url}) has been successfully paused. Use \`/resume\` to start from where you left again.`
+                    `The Song [${music.title}](${music.url}) has been successfully paused.`
                   )
                   .setColor("Yellow"),
               ],
