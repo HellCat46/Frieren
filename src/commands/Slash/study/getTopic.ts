@@ -30,7 +30,7 @@ module.exports = {
       return;
     }
 
-    let selection = new StringSelectMenuBuilder()
+    const selection = new StringSelectMenuBuilder()
       .setCustomId("topicSelection")
       .setPlaceholder("Select one of these topics");
 

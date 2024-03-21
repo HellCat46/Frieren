@@ -172,7 +172,7 @@ export class Frieren extends Client {
               new EmbedBuilder()
                 .setTitle(`Now Playing: ${music.title}`)
                 .setDescription(
-                  `Now Queue has ${this.music.queue.length - 1} song('s) left.`
+                  `Queue has ${this.music.queue.length - 1} song('s) left.`
                 )
                 .setColor("Green"),
             ],
