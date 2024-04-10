@@ -6,9 +6,7 @@ import {
 import ytdl from "ytdl-core";
 import {
   ChatInputCommandInteraction,
-  Client,
   EmbedBuilder,
-  Guild,
   GuildMember,
 } from "discord.js";
 import { Pool } from "pg";
