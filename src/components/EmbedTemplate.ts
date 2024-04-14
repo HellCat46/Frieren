@@ -1,13 +1,9 @@
 import {
-  APIEmbed,
   APIEmbedField,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  Embed,
   EmbedBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
 } from "discord.js";
 import { Music } from "../Frieren";
 import { secondsToString } from "./musicPlayer";
@@ -74,21 +70,23 @@ export function embedTopic(params: {
 }
 
 export function songsToEmbedPages(songs: Music[]) {
-  const embeds: APIEmbedField[][] = [];
+  const pages: APIEmbedField[][] = [];
 
-  let embedIdx = 0;
+  let pageIdx = 0;
 
-  embeds[embedIdx] = [];
-  for (let idx = 1; idx < songs.length; idx++) {
-    embeds[embedIdx].push({
-      name: `${idx}.${songs[idx-1].title}`,
-      value: `Song Duration: ${secondsToString(songs[idx-1].length)} \n [**Link**](${songs[idx-1].url})`,
+  pages[pageIdx] = [];
+  for (let idx = 1; idx <= songs.length; idx++) {
+    pages[pageIdx].push({
+      name: `${idx}.${songs[idx - 1].title}`,
+      value: `Song Duration: ${secondsToString(
+        songs[idx - 1].length
+      )} \n [**Link**](${songs[idx - 1].url})`,
     });
 
     if ((idx % 25) === 0){
-      embeds[++embedIdx] = [];
+      pages[++pageIdx] = [];
       
     }
   }
-  return embeds;
+  return pages;
 }
