@@ -2,10 +2,12 @@ import {
   ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
+  GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
 import { isInVoice } from "../../../components/musicPlayer";
 import { Frieren } from "../../../Frieren";
+import { embedError } from "../../../components/EmbedTemplate";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,20 +17,20 @@ module.exports = {
   async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
-    // if (interaction.client.musicQueue.length === 0) {
-    //   await interaction.editReply({
-    //     embeds: [
-    //       new EmbedBuilder()
-    //         .setTitle("Nothing to Resume")
-    //         .setDescription(
-    //           "Music Player is completely empty. There is nothing to resume"
-    //         )
-    //         .setTimestamp()
-    //         .setFooter({ text: `Request By: ${interaction.user.username}` }),
-    //     ],
-    //   });
-    //   return;
-    // }
+    if (client.music.queue.length === 0) {
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Nothing to Resume")
+            .setDescription(
+              "Music Player is completely empty. There is nothing to resume"
+            )
+            .setTimestamp()
+            .setFooter({ text: `Request By: ${interaction.user.username}` }),
+        ],
+      });
+      return;
+    }
 
     // Checks for user being in same channel as Bot
     const isUsingVoice = isInVoice(interaction);
@@ -37,8 +39,11 @@ module.exports = {
       return;
     }
 
-    // The Queue wouldn't be empty if the interpreter reached here
-    // Why? Because Bot will disconnect from the VC as soon as last song has ended/skipped/stopped.
+    if(interaction.guild?.members.me?.voice.serverMute){
+      await interaction.editReply({embeds: [embedError("The bot is currently server muted, therefore the player can't be resumed.")]})
+      return;
+    }
+
     if (client.music.player.unpause()) {
       const music = client.music.queue[0];
       await interaction.editReply({
