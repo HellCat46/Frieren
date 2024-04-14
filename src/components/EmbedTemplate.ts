@@ -1,9 +1,16 @@
 import {
+  APIEmbed,
+  APIEmbedField,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  Embed,
   EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } from "discord.js";
+import { Music } from "../Frieren";
+import { secondsToString } from "./musicPlayer";
 
 export function embedError(message: string) {
   return new EmbedBuilder().setDescription(message).setColor("#FF9494");
@@ -48,9 +55,9 @@ export function embedTopic(params: {
       .setLabel("Remove Page")
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
-    .setCustomId(`${params.id}.rotate`)
-    .setLabel("Rotate")
-    .setStyle(ButtonStyle.Success)
+      .setCustomId(`${params.id}.rotate`)
+      .setLabel("Rotate")
+      .setStyle(ButtonStyle.Success)
   );
 
   const advance = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -64,4 +71,24 @@ export function embedTopic(params: {
       .setStyle(ButtonStyle.Primary)
   );
   return { embed: embed, rows: [move, manage, advance] };
+}
+
+export function songsToEmbedPages(songs: Music[]) {
+  const embeds: APIEmbedField[][] = [];
+
+  let embedIdx = 0;
+
+  embeds[embedIdx] = [];
+  for (let idx = 1; idx < songs.length; idx++) {
+    embeds[embedIdx].push({
+      name: `${idx}.${songs[idx-1].title}`,
+      value: `Song Duration: ${secondsToString(songs[idx-1].length)} \n [**Link**](${songs[idx-1].url})`,
+    });
+
+    if ((idx % 25) === 0){
+      embeds[++embedIdx] = [];
+      
+    }
+  }
+  return embeds;
 }
