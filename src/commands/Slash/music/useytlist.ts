@@ -10,9 +10,7 @@ import {
   embedError,
   songsToEmbedPages,
 } from "../../../components/EmbedTemplate";
-import {
-  MusicSelectorWithPagination,
-} from "../../../components/musicPlayer";
+import { MusicSelectorWithPagination } from "../../../components/musicPlayer";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -110,6 +108,12 @@ module.exports = {
       .setFields(fieldsArray[0])
       .setFooter({ text: `1 of ${fieldsArray.length}` });
 
-    await MusicSelectorWithPagination(client, interaction, songList, fieldsArray, songsData);
+    await MusicSelectorWithPagination(
+      client,
+      interaction,
+      songList,
+      fieldsArray,
+      songsData
+    );
   },
 };

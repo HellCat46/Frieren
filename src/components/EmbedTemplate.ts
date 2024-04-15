@@ -76,17 +76,15 @@ export function songsToEmbedPages(songs: Music[]) {
 
   pages[pageIdx] = [];
   for (let idx = 1; idx <= songs.length; idx++) {
+    if (idx % 25 === 0) {
+      pages[++pageIdx] = [];
+    }
     pages[pageIdx].push({
       name: `${idx}.${songs[idx - 1].title}`,
       value: `Song Duration: ${secondsToString(
         songs[idx - 1].length
       )} \n [**Link**](${songs[idx - 1].url})`,
     });
-
-    if ((idx % 25) === 0){
-      pages[++pageIdx] = [];
-      
-    }
   }
   return pages;
 }

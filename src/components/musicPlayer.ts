@@ -205,8 +205,9 @@ export async function MusicSelectorWithPagination(
           return;
         }
 
+        --pageNo;
         songListEmbed
-          .setFields(pages[--pageNo])
+          .setFields(pages[pageNo-1])
           .setFooter({ text: `${pageNo} of ${pages.length}` });
         await inter.update({ embeds: [songListEmbed] });
 
@@ -221,8 +222,9 @@ export async function MusicSelectorWithPagination(
           return;
         }
 
+        ++pageNo;
         songListEmbed
-          .setFields(pages[++pageNo])
+          .setFields(pages[pageNo-1])
           .setFooter({ text: `${pageNo} of ${pages.length}` });
         await inter.update({ embeds: [songListEmbed] });
 
