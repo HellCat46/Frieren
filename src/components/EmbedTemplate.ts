@@ -9,7 +9,7 @@ import { Music } from "../Frieren";
 import { secondsToString } from "./musicPlayer";
 
 export function embedError(message: string) {
-  return new EmbedBuilder().setDescription(message).setColor("#FF9494");
+  return new EmbedBuilder().setTitle(message).setColor("#FF9494");
 }
 
 export function embedTopic(params: {

@@ -9,6 +9,7 @@ import {
   Collection,
   EmbedBuilder,
   IntentsBitField,
+  Routes,
   SlashCommandBuilder,
 } from "discord.js";
 import { Pool } from "pg";
@@ -72,6 +73,41 @@ export class Frieren extends Client {
     );
   }
 
+  // Register Commands to
+  async RegisterCommands() {
+    if (this.user == null)
+      throw new Error(
+        "Application needs to be a Discord Bot Client to Deploy Commands."
+      );
+
+    const guildId = process.env.GUILDID;
+    if (guildId == null)
+      throw new Error("Guild ID ENV Variable to not defined.");
+
+    const commandsData: SlashCommandBuilder[] = [];
+    for (const command of this.commands.values()) {
+      commandsData.push(command.data);
+    }
+
+    console.log(
+      "\x1b[30m" +
+        `[Bot] Started refreshing ${commandsData.length} application (/) commands.`
+    );
+
+    const data = await this.rest.put(
+      Routes.applicationGuildCommands(this.user.id, guildId),
+      {
+        body: commandsData,
+      }
+    );
+
+    console.log(
+      "\x1b[30m" +
+        // @ts-ignore
+        `[Bot] Successfully reloaded ${data.length} application (/) commands.`
+    );
+  }
+
   // Fetches Interaction Data from the directories using node fs modules
   // and add them to collection.
   // In case of failure, it will just throw exception and if exception is handled
@@ -104,7 +140,7 @@ export class Frieren extends Client {
     this.commands = commands;
 
     // Adds Buttons to Collection
-    const buttons : typeof this.buttons = new Collection();
+    const buttons: typeof this.buttons = new Collection();
     const buttonsPath = path.join(__dirname, "commands/Buttons");
     const buttonsFiles = fs
       .readdirSync(buttonsPath)
@@ -115,7 +151,7 @@ export class Frieren extends Client {
 
       delete require.cache[require.resolve(filePath)];
       const button = require(filePath);
-      
+
       if ("execute" in button) {
         buttons.set(file.split(".js")[0], button);
       }

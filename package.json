@@ -5,7 +5,6 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
-    "deploy": "tsc && node dist/deploy-commands.js",
     "start": "tsc && node dist/index.js"
   },
   "devDependencies": {

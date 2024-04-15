@@ -2,8 +2,9 @@ import dotenv from "dotenv";
 import { Frieren } from "./Frieren";
 dotenv.config();
 
-
-const client = new Frieren();
-
-client.initializeDatabase();
-client.login(process.env.DISCORD_TOKEN);
+(async () => {
+  const client = new Frieren();
+  await client.initializeDatabase();
+  await client.login(process.env.DISCORD_TOKEN);
+  await client.RegisterCommands();
+})();
