@@ -12,8 +12,9 @@ module.exports = {
   once: false,
   async execute(client: Frieren, oldState: VoiceState, newState: VoiceState) {
     try {
-      if (client.user?.id !== newState.id && client.music.queue.length === 0)
+      if (client.user?.id !== newState.id || client.music.queue.length === 0)
         return;
+
       const music = client.music.queue[0];
       const channel = await client.channels.fetch(music.channel);
 

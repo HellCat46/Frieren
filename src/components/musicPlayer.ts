@@ -1,5 +1,6 @@
 import {
   AudioPlayer,
+  AudioPlayerStatus,
   createAudioResource,
   getVoiceConnection,
   joinVoiceChannel,
@@ -8,6 +9,7 @@ import ytdl from "ytdl-core";
 import {
   APIEmbedField,
   ActionRowBuilder,
+  ActivityType,
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
@@ -320,6 +322,35 @@ export async function MusicSelectorWithPagination(
       playMusic(client.music.player, selectedSongs[0]);
       voiceConnection.subscribe(client.music.player);
       client.music.queue.push(...selectedSongs);
+
+      // Fetches The VoiceState from Client Directly to break cache
+      if (
+        client.guilds.cache.get(interaction.member.guild.id)?.members.me?.voice
+          .serverMute
+      ) {
+        client.music.player.once(AudioPlayerStatus.Playing, () => {
+          try {
+            if (client.music.player.pause(true)) {
+              interaction.editReply({
+                embeds: [
+                  embedError(
+                    "The Music Player has been paused since Bot is currently Server Muted. Please Unmute the Bot to start the Player."
+                  ),
+                ],
+                components: [],
+              });
+            }
+          } catch (e) {
+            console.log(e);
+          }
+        });
+        console.log("Hello?");
+      } else {
+        client.user?.setActivity({
+          name: selectedSongs[0].title,
+          type: ActivityType.Playing,
+        });
+      }
 
       await interaction.editReply({
         embeds: [

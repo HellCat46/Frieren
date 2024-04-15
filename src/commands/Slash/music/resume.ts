@@ -8,6 +8,7 @@ import {
 import { isInVoice } from "../../../components/musicPlayer";
 import { Frieren } from "../../../Frieren";
 import { embedError } from "../../../components/EmbedTemplate";
+import { AudioPlayerStatus } from "@discordjs/voice";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -16,6 +17,15 @@ module.exports = {
 
   async execute(client: Frieren, interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
+
+    if (client.music.player.state.status !== AudioPlayerStatus.Paused) {
+      await interaction.editReply({
+        embeds: [
+          embedError("This action can only be performed when Music is Paused."),
+        ],
+      });
+      return;
+    }
 
     if (client.music.queue.length === 0) {
       await interaction.editReply({
@@ -39,8 +49,14 @@ module.exports = {
       return;
     }
 
-    if(interaction.guild?.members.me?.voice.serverMute){
-      await interaction.editReply({embeds: [embedError("The bot is currently server muted, therefore the player can't be resumed.")]})
+    if (interaction.guild?.members.me?.voice.serverMute) {
+      await interaction.editReply({
+        embeds: [
+          embedError(
+            "The bot is currently server muted, therefore the player can't be resumed."
+          ),
+        ],
+      });
       return;
     }
 

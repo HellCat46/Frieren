@@ -1,4 +1,4 @@
-import { joinVoiceChannel } from "@discordjs/voice";
+import { AudioPlayerStatus, joinVoiceChannel } from "@discordjs/voice";
 import {
   ActionRowBuilder,
   ActivityType,
@@ -13,8 +13,13 @@ import {
 import { embedError } from "../../../components/EmbedTemplate";
 import ytdl from "ytdl-core";
 import yts from "yt-search";
-import { addToPlaylist, playMusic, removeToPlaylist, secondsToString } from "../../../components/musicPlayer";
-import { Frieren, Music, topicStatus } from "../../../Frieren";
+import {
+  addToPlaylist,
+  playMusic,
+  removeToPlaylist,
+  secondsToString,
+} from "../../../components/musicPlayer";
+import { Frieren, Music } from "../../../Frieren";
 
 const pattern =
   /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
@@ -170,7 +175,7 @@ module.exports = {
       });
 
       if (res == null) return;
-      await collPlaylistBtn(client, interaction, videoId,res);
+      await collPlaylistBtn(client, interaction, videoId, res);
       return;
     }
 
@@ -187,10 +192,36 @@ module.exports = {
 
     client.music.queue.push(music);
 
-    client.user?.setActivity({
-      name: music.title,
-      type: ActivityType.Playing,
-    });
+
+
+    // Fetches The VoiceState from Client Directly to break cache
+    if (
+      client.guilds.cache.get(interaction.guild.id)?.members.me?.voice
+        .serverMute
+    ) {
+      client.music.player.once(AudioPlayerStatus.Playing, () => {
+        try {
+          if (client.music.player.pause(true)) {
+            interaction.editReply({
+              embeds: [
+                embedError(
+                  "The Music Player has been paused since Bot is currently Server Muted. Please Unmute the Bot to start the Player."
+                ),
+              ],
+              components: [],
+            });
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      });
+      console.log("Hello?");
+    } else {
+      client.user?.setActivity({
+        name: music.title,
+        type: ActivityType.Playing,
+      });
+    }
 
     const res = await (
       await interaction.editReply({
@@ -212,7 +243,7 @@ module.exports = {
       components: [],
     });
     if (res == null) return;
-    await collPlaylistBtn(client, interaction,videoId, res);
+    await collPlaylistBtn(client, interaction, videoId, res);
   },
 };
 
