@@ -15,9 +15,15 @@ import {
 import { Pool } from "pg";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import path from "node:path";
-import fs, { mkdirSync, readFileSync } from "node:fs";
+import fs, { mkdirSync } from "node:fs";
+import {
+  getWordDetails,
+  getWordGuildList,
+  removeWordGuild,
+} from "./components/Words";
 import { playMusic, stopMusic } from "./components/musicPlayer";
 import { archivefolder, notesfolder } from "./components/ManageFiles";
+import { embedError } from "./components/EmbedTemplate";
 
 export class Frieren extends Client {
   dbPool: Pool = new Pool();
@@ -108,6 +114,61 @@ export class Frieren extends Client {
     );
   }
 
+  // Sends a random word and its details to all the subscriber guilds
+  // every day at 6:00 AM (GMT +5:30)
+  async SendWordsToServers() {
+    try {
+      const wordSubGuilds = await getWordGuildList(this.dbPool);
+
+      for (const guildData of wordSubGuilds) {
+        const guild = await this.guilds.fetch(guildData.guildId);
+        if (guild == null) {
+          await removeWordGuild(this.dbPool, guildData.guildId);
+          continue;
+        }
+
+        let chann;
+        try {
+          chann = await guild.channels.fetch(guildData.channelId);
+          if (
+            !chann ||
+            !chann.isTextBased() ||
+            !(
+              guild.members.me &&
+              chann.permissionsFor(guild.members.me).has("SendMessages")
+            )
+          )
+            throw new Error("No Write Access");
+        } catch (ex) {
+          await (
+            await guild.fetchOwner()
+          ).send({
+            embeds: [
+              embedError(
+                `Unable to send message in <#${guildData.channelId}>. Make sure the bot has permission to send message in it.`
+              ),
+            ],
+          });
+          continue;
+        }
+        const channel = chann;
+
+        for (let tryNo = 0; tryNo < 2; tryNo++) {
+          try {
+            const wordRes = await getWordDetails();
+            if (wordRes instanceof Error) continue;
+
+            await channel.send({ embeds: wordRes });
+            break;
+          } catch (ex) {
+            console.error(ex);
+          }
+        }
+      }
+    } catch (ex) {
+      console.error(ex);
+    }
+  }
   // Fetches Interaction Data from the directories using node fs modules
   // and add them to collection.
   // In case of failure, it will just throw exception and if exception is handled
@@ -159,7 +220,7 @@ export class Frieren extends Client {
     this.buttons = buttons;
   }
 
-  // Add Event Handlers to CLient Events
+  // Add Event Handlers to Client Events
   updateEventHandlers() {
     const eventsPath = path.join(__dirname, "events");
     const eventFiles = fs
@@ -254,10 +315,10 @@ export class Frieren extends Client {
   );`
       )
       .then(() =>
-        console.log("\x1b[35m" + "[Database] Successfully created Table topic.")
+        console.log("\x1b[35m" + "[Database] Successfully synced Table topic.")
       )
       .catch((err: Error) => {
-        console.error("\x1b[31m" + "[Database] Failed to create Table topic.");
+        console.error("\x1b[31m" + "[Database] Failed to sync Table topic.");
         throw err;
       });
 
@@ -267,12 +328,26 @@ export class Frieren extends Client {
       )
       .then(() =>
         console.log(
-          "\x1b[35m" + "[Database] Successfully create Table playlist."
+          "\x1b[35m" + "[Database] Successfully synced Table playlist."
+        )
+      )
+      .catch((err: Error) => {
+        console.error("\x1b[31m" + "[Database] Failed to sync Table playlist.");
+        throw err;
+      });
+
+    await this.dbPool
+      .query(
+        `CREATE TABLE IF NOT EXISTS "wordguilds" ("guildId" varchar(25) PRIMARY KEY NOT NULL, "channelId" varchar(25) NOT NULL)`
+      )
+      .then(() =>
+        console.log(
+          "\x1b[35m" + "[Database] Successfully synced Table WordGuilds"
         )
       )
       .catch((err: Error) => {
         console.error(
-          "\x1b[31m" + "[Database] Failed to create Table playlist."
+          "\x1b[31m" + "[Database] Failed to sync Table WordGuilds."
         );
         throw err;
       });
