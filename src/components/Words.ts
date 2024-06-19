@@ -7,7 +7,7 @@ export async function getWordDetails(argWord?: string | null) {
     : (
         await (
           await fetch(
-            "https://random-word-api.vercel.app/api?words=1&type=capitalized"
+            "https://random-word-api.herokuapp.com/word"
           )
         ).json()
       )[0];
