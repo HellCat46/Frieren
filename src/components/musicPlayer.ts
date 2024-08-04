@@ -5,7 +5,7 @@ import {
   getVoiceConnection,
   joinVoiceChannel,
 } from "@discordjs/voice";
-import ytdl from "ytdl-core";
+import ytdl from "@distube/ytdl-core";
 import {
   APIEmbedField,
   ActionRowBuilder,
@@ -37,7 +37,11 @@ export function playMusic(voicePlayer: AudioPlayer, music: Music) {
     quality: "highestaudio",
     highWaterMark: 1 << 25,
   });
-
+  ytdl(music.url, {
+    filter: "audioonly",
+    quality: "highestaudio",
+    highWaterMark: 1 << 25,
+  })
   const resource = createAudioResource(stream);
   voicePlayer.play(resource);
 }

@@ -1,28 +1,18 @@
 import {
-  ActionRowBuilder,
   ChatInputCommandInteraction,
-  ComponentType,
   EmbedBuilder,
-  GuildMember,
   SlashCommandBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
 } from "discord.js";
 import {
   MusicSelectorWithPagination,
   getPlaylist,
-  inputToSelectedsongs,
-  playMusic,
-  secondsToString,
 } from "../../../components/musicPlayer";
 import {
   embedError,
   songsToEmbedPages,
 } from "../../../components/EmbedTemplate";
-import ytdl from "ytdl-core";
-import yts from "yt-search";
+import ytdl from "@distube/ytdl-core";
 import { Frieren, Music } from "../../../Frieren";
-import { joinVoiceChannel } from "@discordjs/voice";
 
 module.exports = {
   data: new SlashCommandBuilder()

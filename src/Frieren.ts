@@ -66,6 +66,19 @@ export class Frieren extends Client {
     }
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLEAPIKEY);
 
+    this.music.player.on("error", (err) => {
+      console.log(err);
+      if(this.music.queue.length == 0) return;
+
+      this.channels.fetch(this.music.queue[0].channel).then(chan => { 
+        if(chan == null) return;
+        if(!chan.isTextBased()) return;
+
+        chan.send("Unexpected error occured occured in Music Player.").catch(err => {});
+      }
+      ).catch(()=> null);
+    });
+
     // Loads all the Event Files
     console.log("\x1b[33m" + "[Bot] Loading Events...");
     this.updateEventHandlers();

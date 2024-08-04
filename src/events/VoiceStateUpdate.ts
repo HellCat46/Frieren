@@ -21,7 +21,7 @@ module.exports = {
       // Stop and Clear Music Queue after Bot is disconnected from VC
       if (oldState.channel != null && newState.channel == null) {
         stopMusic(client, oldState.channel.guildId);
-        sendMessage(
+        await sendMessage(
           channel,
           new EmbedBuilder()
             .setTitle("Bot was disconnected from the VC Channel")
@@ -36,7 +36,7 @@ module.exports = {
 
       // Pauses and Resume player whenever bot is serverMute has changed.
       if (!oldState.mute && newState.mute && client.music.player.pause(true)) {
-        sendMessage(
+        await sendMessage(
           channel,
           new EmbedBuilder()
             .setTitle("Successfully Paused the Music Player")
@@ -51,7 +51,7 @@ module.exports = {
         !newState.mute &&
         client.music.player.unpause()
       ) {
-        sendMessage(
+        await sendMessage(
           channel,
           new EmbedBuilder()
             .setTitle("Successfully Resumed the Music Player")

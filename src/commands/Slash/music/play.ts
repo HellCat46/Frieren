@@ -11,7 +11,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { embedError } from "../../../components/EmbedTemplate";
-import ytdl from "ytdl-core";
+import ytdl from "@distube/ytdl-core";
 import yts from "yt-search";
 import {
   addToPlaylist,
@@ -179,6 +179,7 @@ module.exports = {
       return;
     }
 
+    
     playMusic(client.music.player, music);
 
     // Joins Voice Channel to Create an Connection
