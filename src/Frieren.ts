@@ -24,6 +24,7 @@ import {
 import { playMusic, stopMusic } from "./components/musicPlayer";
 import { archivefolder, notesfolder } from "./components/ManageFiles";
 import { embedError } from "./components/EmbedTemplate";
+import { CronJob } from "cron";
 
 export class Frieren extends Client {
   dbPool: Pool = new Pool();
@@ -44,6 +45,7 @@ export class Frieren extends Client {
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.MessageContent,
         IntentsBitField.Flags.GuildVoiceStates,
+        IntentsBitField.Flags.GuildVoiceStates
       ],
     });
 
@@ -56,6 +58,22 @@ export class Frieren extends Client {
       loop: false,
       player: createAudioPlayer(),
       queue: [],
+      clearJob: new CronJob("*/10 * * * *", async () => {
+        try {
+          if (this.music.queue.length === 0) return;
+
+          const channelId = this.music.queue[0].channel;
+          stopMusic(this, this.music.queue[0].guild);
+          this.music.clearJob.stop();
+
+          const channel = await this.channels.fetch(channelId);
+          if (!channel?.isTextBased()) return;
+
+          await channel.send({ embeds: [new EmbedBuilder().setDescription("No one has been listening in VC for last 10 minutes.").setColor("Red")] });
+        } catch (ex) {
+          console.log(ex)
+        }
+      })
     };
     this.initializeMusicComponent();
 
@@ -68,15 +86,15 @@ export class Frieren extends Client {
 
     this.music.player.on("error", (err) => {
       console.log(err);
-      if(this.music.queue.length == 0) return;
+      if (this.music.queue.length == 0) return;
 
-      this.channels.fetch(this.music.queue[0].channel).then(chan => { 
-        if(chan == null) return;
-        if(!chan.isTextBased()) return;
+      this.channels.fetch(this.music.queue[0].channel).then(chan => {
+        if (chan == null) return;
+        if (!chan.isTextBased()) return;
 
-        chan.send("Unexpected error occured occured in Music Player.").catch(err => {});
+        chan.send("Unexpected error occured occured in Music Player.").catch(err => { });
       }
-      ).catch(()=> null);
+      ).catch(() => null);
     });
 
     // Loads all the Event Files
@@ -110,7 +128,7 @@ export class Frieren extends Client {
 
     console.log(
       "\x1b[30m" +
-        `[Bot] Started refreshing ${commandsData.length} application (/) commands.`
+      `[Bot] Started refreshing ${commandsData.length} application (/) commands.`
     );
 
     const data = await this.rest.put(
@@ -122,8 +140,8 @@ export class Frieren extends Client {
 
     console.log(
       "\x1b[30m" +
-        // @ts-ignore
-        `[Bot] Successfully reloaded ${data.length} application (/) commands.`
+      // @ts-ignore
+      `[Bot] Successfully reloaded ${data.length} application (/) commands.`
     );
   }
 
@@ -371,6 +389,7 @@ interface MusicPlayer {
   loop: boolean;
   queue: Music[];
   player: AudioPlayer;
+  clearJob: CronJob
 }
 
 export interface Music {

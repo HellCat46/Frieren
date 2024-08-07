@@ -1,8 +1,6 @@
 import {
-  ActivityType,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
 import { isInVoice } from "../../../components/musicPlayer";
